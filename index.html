@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>おひめさま きせかえ</title>
+<style>
+  :root {
+    --pink: #ff7fb6;
+    --pink-dark: #e85a9b;
+    --pink-light: #ffe3f0;
+    --cream: #fff8fb;
+    --purple: #a678e8;
+    --text: #6b3a5b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    font-family: "Hiragino Maru Gothic ProN", "Rounded Mplus 1c", "Yu Gothic", "Meiryo", sans-serif;
+    color: var(--text); background: var(--pink-light);
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+  button { font-family: inherit; color: inherit; cursor: pointer; border: none; padding: 0; touch-action: manipulation; }
+
+  #app { display: grid; height: 100vh; height: 100dvh; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-rows: minmax(0, 1fr); }
+  @media (orientation: portrait) {
+    #app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 52fr) minmax(0, 48fr); }
+  }
+  body.done #app { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+  body.done #panel, body.done .edit-only { display: none; }
+  body:not(.done) .done-only { display: none; }
+
+  /* ---------- ステージ ---------- */
+  #stage { position: relative; overflow: hidden; min-height: 0; }
+  #stage svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  #doll { animation: bob 3.2s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  body.done #doll { animation: dance 1.4s ease-in-out infinite; transform-origin: 200px 600px; }
+  @keyframes dance {
+    0%, 100% { transform: rotate(-4deg) translateY(0); }
+    50% { transform: rotate(4deg) translateY(-12px); }
+  }
+  .eyes { transform-box: fill-box; transform-origin: center; animation: blink 4s infinite; }
+  @keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+  .pop { transform-box: fill-box; transform-origin: center; animation: pop 0.45s cubic-bezier(.3, 1.8, .5, 1); }
+  @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .spark { transform-box: fill-box; transform-origin: center; animation: spark 0.8s ease-out forwards; pointer-events: none; }
+  @keyframes spark {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.2) rotate(90deg); opacity: 1; }
+    100% { transform: scale(0) rotate(180deg); opacity: 0; }
+  }
+
+  .round-btn {
+    position: absolute; width: 64px; height: 64px; border-radius: 50%;
+    background: #fff; font-size: 32px; line-height: 1;
+    box-shadow: 0 4px 0 rgba(160, 80, 130, 0.25), 0 6px 14px rgba(160, 80, 130, 0.2);
+    display: grid; place-items: center;
+  }
+  .round-btn:active, .big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(160, 80, 130, 0.25); }
+  #btnSound { top: 12px; right: 12px; }
+  #doneBtns { position: absolute; bottom: 16px; left: 0; right: 0; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  body.done #doneBtns { display: flex; }
+  .big-btn {
+    padding: 12px 30px; border-radius: 999px; white-space: nowrap;
+    background: linear-gradient(#ff9cc8, var(--pink)); color: #fff;
+    font-size: 26px; font-weight: 800; letter-spacing: 0.05em;
+    box-shadow: 0 5px 0 var(--pink-dark), 0 8px 16px rgba(160, 80, 130, 0.3);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+  }
+  .big-btn.alt { background: #fff; color: var(--pink-dark); text-shadow: none; box-shadow: 0 5px 0 #f3bcd6, 0 8px 16px rgba(160, 80, 130, 0.2); }
+  #banner {
+    position: absolute; top: 18px; left: 0; right: 0; text-align: center; pointer-events: none;
+    font-size: clamp(34px, 8vw, 64px); font-weight: 900; color: var(--pink-dark);
+    text-shadow: 0 0 6px #fff, 0 0 6px #fff, 0 0 12px #fff, 0 0 20px #fff;
+    animation: bannerIn 0.7s cubic-bezier(.3, 1.8, .5, 1);
+  }
+  @keyframes bannerIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+  .confetti { position: absolute; top: -60px; pointer-events: none; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translateY(115vh) rotate(360deg); } }
+
+  /* ---------- えらぶパネル ---------- */
+  #panel {
+    display: flex; flex-direction: column; min-height: 0; gap: 10px; padding: 10px;
+    background: var(--cream); box-shadow: 0 0 20px rgba(160, 80, 130, 0.25); z-index: 1;
+  }
+  #tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .tab {
+    border-radius: 18px; background: #fff; padding: 6px 2px 4px;
+    border: 4px solid var(--pink-light); display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .tab .ico { font-size: clamp(26px, 4.5vmin, 40px); line-height: 1.1; }
+  .tab .lbl { font-size: clamp(10px, 1.7vmin, 14px); font-weight: 700; white-space: nowrap; }
+  .tab.on { background: var(--pink); border-color: var(--pink-dark); color: #fff; transform: scale(1.04); }
+  #items {
+    flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(92px, 15vmin, 130px), 1fr)); gap: 10px;
+    align-content: start; padding: 10px;
+  }
+  .item {
+    position: relative; aspect-ratio: 1; border-radius: 22px; background: #fff;
+    border: 5px solid var(--pink-light); overflow: hidden;
+    box-shadow: 0 4px 0 rgba(160, 80, 130, 0.15);
+  }
+  .item:active { transform: scale(0.94); }
+  .item svg { width: 100%; height: 100%; display: block; }
+  .item.on { border-color: var(--pink); background: #fff0f7; }
+  .item.on::after {
+    content: "✓"; position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--pink); color: #fff; font-weight: 900; font-size: 18px; display: grid; place-items: center;
+  }
+  .item .none { font-size: 20px; font-weight: 800; color: #d9a9c3; }
+
+  #actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap: 8px; }
+  .act {
+    border-radius: 18px; background: #fff; border: 4px solid var(--pink-light); padding: 6px 2px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    box-shadow: 0 4px 0 rgba(160, 80, 130, 0.15);
+  }
+  .act:active { transform: translateY(3px); box-shadow: none; }
+  .act .ico { font-size: clamp(24px, 4vmin, 34px); line-height: 1.1; }
+  .act .lbl { font-size: clamp(10px, 1.7vmin, 14px); font-weight: 700; white-space: nowrap; }
+  .act.go { background: linear-gradient(#ff9cc8, var(--pink)); border-color: var(--pink-dark); color: #fff; }
+  .act.go .lbl { font-size: clamp(14px, 2.6vmin, 22px); font-weight: 800; }
+  #hint { display: none; text-align: center; font-size: 12px; font-weight: 700; color: #c08aa8; }
+  body.kbd #hint { display: block; }
+
+  /* ---------- キーボードの カーソル ---------- */
+  body.kbd .cur { outline: 6px solid #ffb300; outline-offset: 2px; position: relative; z-index: 2; animation: curPulse 1s ease-in-out infinite; }
+  @keyframes curPulse { 0%, 100% { outline-color: #ffb300; } 50% { outline-color: #ff5c8a; } }
+
+  /* ---------- アルバム ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 10; background: var(--cream); display: flex; flex-direction: column; }
+  .overlay[hidden], [hidden] { display: none !important; }
+  .ov-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
+  .ov-title { font-size: clamp(24px, 5vmin, 38px); font-weight: 900; color: var(--pink-dark); }
+  #albumGrid {
+    flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 16px 24px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 20vmin, 190px), 1fr)); gap: 14px; align-content: start;
+  }
+  .card {
+    position: relative; aspect-ratio: 3 / 4; border-radius: 22px; overflow: hidden; background: #fff;
+    border: 5px solid var(--pink-light); box-shadow: 0 4px 0 rgba(160, 80, 130, 0.15);
+  }
+  .card svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .card .date, #viewDate {
+    position: absolute; left: 50%; translate: -50% 0; bottom: 6px; white-space: nowrap;
+    background: rgba(255, 255, 255, 0.9); border-radius: 999px; padding: 2px 12px; font-size: 13px; font-weight: 800;
+  }
+  .empty { grid-column: 1 / -1; text-align: center; font-size: clamp(18px, 3.5vmin, 26px); font-weight: 800; line-height: 2; color: #c08aa8; margin-top: 12vh; }
+  #viewStage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #viewStage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #viewDate { bottom: 10px; font-size: 18px; padding: 4px 18px; }
+  #viewBtns, #confirm { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px; }
+  #viewBtns .big-btn, #confirm .big-btn { font-size: clamp(16px, 3vmin, 24px); padding: 10px 22px; }
+  #confirm .q { font-size: clamp(18px, 3.4vmin, 26px); font-weight: 900; width: 100%; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- 共通グラデーション -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gRainbow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8fa3"/><stop offset=".2" stop-color="#ffc48a"/>
+      <stop offset=".4" stop-color="#fff08a"/><stop offset=".6" stop-color="#a5e8a0"/>
+      <stop offset=".8" stop-color="#8fd0ff"/><stop offset="1" stop-color="#c5a3ff"/>
+    </linearGradient>
+    <linearGradient id="gCastle" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc9e3"/><stop offset="1" stop-color="#fff3d6"/></linearGradient>
+    <linearGradient id="gGarden" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fdcff"/><stop offset="1" stop-color="#e6f8ff"/></linearGradient>
+    <linearGradient id="gNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2a6b"/><stop offset="1" stop-color="#7a5bb8"/></linearGradient>
+    <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#fdf6ff"/></linearGradient>
+    <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe3f0"/><stop offset="1" stop-color="#d9fbff"/></linearGradient>
+    <linearGradient id="gKira" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3da"/><stop offset="1" stop-color="#c3a6ff"/></linearGradient>
+  </defs>
+</svg>
+
+<div id="app">
+  <div id="stage">
+    <svg viewBox="0 0 400 620" preserveAspectRatio="xMidYMid meet">
+      <g id="bgL"></g>
+      <g id="doll"></g>
+      <g id="fx"></g>
+    </svg>
+    <button class="round-btn" id="btnSound" aria-label="おと">🔊</button>
+    <div id="banner" class="done-only">できあがり!</div>
+    <div id="doneBtns" class="done-only">
+      <button class="big-btn" id="btnBack" data-nav="back">👗 もういちど</button>
+      <button class="big-btn alt" id="btnAlbum2" data-nav="album">📖 アルバム</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="tabs"></div>
+    <div id="items"></div>
+    <div id="actions">
+      <button class="act" id="btnRandom" data-nav="act-random"><span class="ico">🎲</span><span class="lbl">おまかせ</span></button>
+      <button class="act" id="btnReset" data-nav="act-reset"><span class="ico">🧹</span><span class="lbl">さいしょから</span></button>
+      <button class="act" id="btnAlbum" data-nav="act-album"><span class="ico">📖</span><span class="lbl">アルバム</span></button>
+      <button class="act go" id="btnDone" data-nav="act-done"><span class="ico">✨</span><span class="lbl">できた!</span></button>
+    </div>
+    <div id="hint">← ↑ ↓ → で えらぶ ・ Enter か スペースで きめる ・ Esc で もどる</div>
+  </div>
+</div>
+
+<div id="album" class="overlay" hidden>
+  <div class="ov-head">
+    <div class="ov-title">📖 アルバム</div>
+    <button class="big-btn alt" id="albumClose" data-nav="close">✕ もどる</button>
+  </div>
+  <div id="albumGrid"></div>
+</div>
+
+<div id="viewer" class="overlay" hidden>
+  <div id="viewStage">
+    <svg id="viewSvg" viewBox="0 0 400 620" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="viewDate"></div>
+  </div>
+  <div id="viewBtns">
+    <button class="big-btn alt" id="viewPrev" data-nav="prev">◀ まえ</button>
+    <button class="big-btn alt" id="viewNext" data-nav="next">つぎ ▶</button>
+    <button class="big-btn" id="viewPlay" data-nav="play">👗 このこで あそぶ</button>
+    <button class="big-btn alt" id="viewDel" data-nav="del">🗑 けす</button>
+    <button class="big-btn alt" id="viewClose" data-nav="close">✕ もどる</button>
+  </div>
+  <div id="confirm" hidden>
+    <div class="q">この おひめさまを けしても いい?</div>
+    <button class="big-btn alt" id="delNo" data-nav="no">いいえ</button>
+    <button class="big-btn" id="delYes" data-nav="yes">はい、けす</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= ずけいの ぶひん ================= */
+const SKIN = '#ffdfc4';
+const mirror = s => s + `<g transform="translate(400 0) scale(-1 1)">${s}</g>`;
+const circle = (x, y, r, f, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${extra}/>`;
+const star = (cx, cy, r, f, extra = '') => {
+  const p = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.48 : r;
+    p.push((cx + Math.cos(a) * rr).toFixed(1) + ',' + (cy + Math.sin(a) * rr).toFixed(1));
+  }
+  return `<polygon points="${p.join(' ')}" fill="${f}" stroke="${f}" stroke-width="${(r * 0.18).toFixed(1)}" stroke-linejoin="round" ${extra}/>`;
+};
+const heart = (cx, cy, s, f) =>
+  `<path d="M${cx} ${cy + s * 0.9} C${cx - s * 1.7} ${cy - s * 0.2} ${cx - s * 0.7} ${cy - s * 1.4} ${cx} ${cy - s * 0.45} C${cx + s * 0.7} ${cy - s * 1.4} ${cx + s * 1.7} ${cy - s * 0.2} ${cx} ${cy + s * 0.9}Z" fill="${f}"/>`;
+const flower = (cx, cy, r, petal, center = '#ffd84a') => {
+  let s = '';
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+    s += circle((cx + Math.cos(a) * r * 0.62).toFixed(1), (cy + Math.sin(a) * r * 0.62).toFixed(1), (r * 0.48).toFixed(1), petal);
+  }
+  return s + circle(cx, cy, (r * 0.36).toFixed(1), center);
+};
+const ribbon = (cx, cy, s, f, knot) =>
+  `<path d="M${cx} ${cy} L${cx - s} ${cy - s * 0.7} Q${cx - s * 1.15} ${cy} ${cx - s} ${cy + s * 0.7}Z M${cx} ${cy} L${cx + s} ${cy - s * 0.7} Q${cx + s * 1.15} ${cy} ${cx + s} ${cy + s * 0.7}Z" fill="${f}" stroke="${f}" stroke-width="${s * 0.15}" stroke-linejoin="round"/>` +
+  circle(cx, cy, s * 0.3, knot);
+const NONE = { n: 'なし', none: true, d: () => '' };
+
+/* ================= アイテム ================= */
+const HAIR_COLORS = [
+  { n: 'ちゃいろ', c: '#8a5530' }, { n: 'きんいろ', c: '#f7cb4d' }, { n: 'くろ', c: '#3a2e3f' },
+  { n: 'ピンク', c: '#ff8fc0' }, { n: 'むらさき', c: '#a678e8' }, { n: 'みずいろ', c: '#5cc8e8' },
+  { n: 'オレンジ', c: '#f2853f' },
+];
+
+const CAP = c => circle(200, 160, 67, c);
+const HAIRS = [
+  { n: 'ロングヘア', d: c => `<path d="M200 96 C120 96 125 180 122 260 C120 330 108 370 124 396 C150 408 166 380 170 330 L230 330 C234 380 250 408 276 396 C292 370 280 330 278 260 C275 180 280 96 200 96Z" fill="${c}"/>` },
+  { n: 'ツインテール', d: c => CAP(c) + mirror(`<path d="M142 132 C85 128 58 220 74 322 C82 348 113 342 119 310 C123 260 136 215 152 190Z" fill="${c}"/>${circle(138, 140, 11, '#ff7fb6')}`) },
+  { n: 'おだんご', d: c => CAP(c) + mirror(circle(132, 104, 28, c) + circle(146, 122, 9, '#ffd84a')) },
+  { n: 'ボブ', d: c => `<path d="M200 96 C123 96 120 170 124 236 C140 254 162 248 166 226 L234 226 C238 248 260 254 276 236 C280 170 277 96 200 96Z" fill="${c}"/>` },
+  { n: 'ふわふわ', d: c => CAP(c) + `<rect x="116" y="160" width="168" height="200" rx="30" fill="${c}"/>` +
+      mirror(circle(128, 190, 27, c) + circle(117, 236, 29, c) + circle(111, 286, 31, c) + circle(118, 336, 29, c) + circle(132, 378, 25, c)) },
+];
+const BANGS = c => `<path d="M137 176 C128 68 272 68 263 176 C256 150 236 134 206 134 C200 150 176 162 137 176Z" fill="${c}"/>`;
+
+const CROWNS = [
+  NONE,
+  { n: 'きんの かんむり', d: () => `<path d="M162 112 L154 62 L180 88 L200 52 L220 88 L246 62 L238 112Z" fill="#ffd23f" stroke="#ffd23f" stroke-width="6" stroke-linejoin="round"/>
+      <rect x="158" y="102" width="84" height="14" rx="7" fill="#ffb300"/>` +
+      circle(154, 60, 6, '#ff5c8a') + circle(200, 50, 7, '#ff5c8a') + circle(246, 60, 6, '#ff5c8a') +
+      circle(180, 109, 4, '#6ad1ff') + circle(200, 109, 5, '#ff5c8a') + circle(220, 109, 4, '#6ad1ff') },
+  { n: 'ティアラ', d: () => `<path d="M158 114 C170 98 186 94 200 68 C214 94 230 98 242 114 Q200 100 158 114Z" fill="#dfe8f5" stroke="#b9c7dc" stroke-width="3" stroke-linejoin="round"/>` +
+      circle(200, 92, 8, '#ff7fb6') + circle(178, 104, 4, '#8fd0ff') + circle(222, 104, 4, '#8fd0ff') + circle(200, 66, 4, '#fff') },
+  { n: 'おはなの かんむり', d: () => [[156, 116, '#ff8fb8'], [174, 106, '#fff'], [200, 101, '#ffb3d1'], [226, 106, '#fff'], [244, 116, '#ff8fb8']]
+      .map(([x, y, c], i) => circle(x - 9, y + 5, 6, '#7fd18b') + flower(x, y, i === 2 ? 17 : 14, c)).join('') },
+  { n: 'おほしさまの かんむり', d: () => `<path d="M158 114 Q200 98 242 114" stroke="#ffd23f" stroke-width="9" fill="none" stroke-linecap="round"/>` +
+      star(200, 80, 24, '#ffd23f') + star(166, 98, 13, '#fff08a') + star(234, 98, 13, '#fff08a') + circle(200, 81, 5, '#fff') },
+  { n: 'ハートの ティアラ', d: () => `<path d="M158 114 Q200 98 242 114" stroke="#ff9cc8" stroke-width="9" fill="none" stroke-linecap="round"/>` +
+      heart(200, 84, 19, '#ff5c8a') + heart(168, 100, 9, '#ffb3d1') + heart(232, 100, 9, '#ffb3d1') + circle(193, 78, 4, '#fff', 'opacity=".8"') },
+  { n: 'おおきな リボン', d: () => ribbon(200, 92, 44, '#ff7fb6', '#ff5c8a') },
+];
+
+const ORNAMENTS = [
+  NONE,
+  { n: 'リボン', d: () => ribbon(254, 128, 19, '#ff5c8a', '#ffd23f') },
+  { n: 'おはな', d: () => flower(254, 128, 17, '#fff', '#ffb300') },
+  { n: 'おほしさま', d: () => star(254, 128, 18, '#ffd23f') },
+  { n: 'ハート', d: () => heart(254, 128, 14, '#ff5c8a') },
+  { n: 'ちょうちょ', d: () => circle(244, 121, 10, '#8fd0ff') + circle(264, 121, 10, '#8fd0ff') + circle(246, 136, 7, '#c5a3ff') + circle(262, 136, 7, '#c5a3ff') +
+      `<rect x="252" y="114" width="4" height="26" rx="2" fill="#6b3a5b"/>` },
+];
+
+const neckArc = (c, w = 4) => `<path d="M179 244 Q200 288 221 244" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+const NECKLACES = [
+  NONE,
+  { n: 'しんじゅの ネックレス', d: () => [0.08, 0.2, 0.32, 0.44, 0.56, 0.68, 0.8, 0.92].map(t => {
+      const x = (1 - t) * (1 - t) * 179 + 2 * t * (1 - t) * 200 + t * t * 221, y = 244 + 88 * t * (1 - t);
+      return circle(x.toFixed(1), y.toFixed(1), 4.2, '#fff', 'stroke="#e6d5dd" stroke-width="1"');
+    }).join('') },
+  { n: 'ハートの ネックレス', d: () => neckArc('#ffd23f') + heart(200, 268, 9, '#ff5c8a') },
+  { n: 'おほしさまの ネックレス', d: () => neckArc('#dfe8f5') + star(200, 268, 10, '#ffd23f') },
+  { n: 'ほうせきの ネックレス', d: () => neckArc('#ffd23f') + `<path d="M200 258 L209 268 L200 281 L191 268Z" fill="#5cc8e8" stroke="#fff" stroke-width="1.5"/>` },
+  { n: 'おはなの ネックレス', d: () => neckArc('#7fd18b') + flower(200, 267, 10, '#ffb3d1') },
+];
+
+const EARRINGS = [
+  NONE,
+  { n: 'しんじゅの イヤリング', d: () => mirror(circle(139, 199, 6, '#fff', 'stroke="#e6d5dd" stroke-width="1.2"')) },
+  { n: 'ハートの イヤリング', d: () => mirror(heart(139, 200, 7, '#ff5c8a')) },
+  { n: 'おほしさまの イヤリング', d: () => mirror(star(139, 200, 8, '#ffd23f')) },
+  { n: 'ほうせきの イヤリング', d: () => mirror(`<path d="M139 193 L145 203 Q139 214 133 203Z" fill="#a678e8" stroke="#fff" stroke-width="1.2"/>`) },
+  { n: 'おはなの イヤリング', d: () => mirror(flower(139, 200, 8, '#8fd0ff')) },
+];
+
+const stick = c => `<path d="M286 352 L306 246" stroke="${c}" stroke-width="7" stroke-linecap="round"/>`;
+const WANDS = [
+  NONE,
+  { n: 'おほしさまの ステッキ', d: () => stick('#ff9cc8') + star(308, 234, 26, '#ffd23f') + circle(308, 235, 6, '#fff') },
+  { n: 'ハートの ステッキ', d: () => stick('#ffd23f') + heart(308, 234, 21, '#ff5c8a') + circle(300, 227, 5, '#fff', 'opacity=".8"') },
+  { n: 'おはなの ステッキ', d: () => stick('#7fd18b') + flower(308, 234, 26, '#ffb3d1') },
+  { n: 'おつきさまの ステッキ', d: () => stick('#c5a3ff') + `<path d="M318 210 A26 26 0 1 0 330 250 A20 20 0 1 1 318 210Z" fill="#ffe36b"/>` + star(322, 232, 8, '#fff') },
+  { n: 'にじの ステッキ', d: () => stick('#8fd0ff') + ['#ff8fa3', '#ffd23f', '#a5e8a0', '#8fd0ff'].map((c, i) =>
+      `<path d="M${280 + i * 7} 246 A${28 - i * 7} ${28 - i * 7} 0 0 1 ${336 - i * 7} 246" stroke="${c}" stroke-width="7" fill="none"/>`).join('') +
+      circle(282, 248, 9, '#fff') + circle(334, 248, 9, '#fff') },
+];
+
+const WINGS = [
+  NONE,
+  { n: 'ちょうちょの はね', d: () => mirror(`<ellipse cx="112" cy="268" rx="80" ry="58" transform="rotate(-22 112 268)" fill="#ff9cc8"/>
+      <ellipse cx="130" cy="352" rx="54" ry="42" transform="rotate(20 130 352)" fill="#c5a3ff"/>` +
+      circle(96, 262, 22, '#fff', 'opacity=".7"') + circle(122, 352, 15, '#fff', 'opacity=".7"') + circle(60, 250, 9, '#ffd23f')) },
+  { n: 'てんしの はね', d: () => mirror(`<g fill="#fff" stroke="#d9e4f2" stroke-width="3">
+      <ellipse cx="96" cy="250" rx="76" ry="30" transform="rotate(-28 96 250)"/>
+      <ellipse cx="104" cy="290" rx="66" ry="27" transform="rotate(-12 104 290)"/>
+      <ellipse cx="118" cy="326" rx="52" ry="23" transform="rotate(6 118 326)"/></g>`) },
+  { n: 'ようせいの はね', d: () => mirror(`<path d="M190 280 C150 170 50 170 36 236 C44 300 130 312 190 292Z" fill="#b8f0e6" stroke="#7fd9c8" stroke-width="3" opacity=".9"/>
+      <path d="M190 300 C140 300 80 340 84 392 C120 410 170 360 190 312Z" fill="#d9f7ff" stroke="#8fd0ff" stroke-width="3" opacity=".9"/>`) },
+  { n: 'マント', d: () => `<path d="M162 258 C120 330 60 470 34 574 Q200 608 366 574 C340 470 280 330 238 258Z" fill="#b34a8a"/>
+      <path d="M162 258 C120 330 60 470 34 574 L60 580 C80 470 130 340 172 262Z" fill="#fff" opacity=".35"/>` },
+];
+
+const DECO_POS = [[150, 440], [250, 440], [118, 500], [282, 500], [158, 520], [242, 520], [165, 388], [235, 388], [98, 545], [302, 545]];
+const dress = (main, light, accent, deco) => {
+  let hem = '';
+  for (let i = 0; i <= 10; i++) { const t = i / 10; hem += circle(60 + 280 * t, (555 + 70 * t * (1 - t)).toFixed(1), 15, light); }
+  return mirror(`<ellipse cx="162" cy="268" rx="19" ry="15" fill="${light}"/>`) +
+    `<path d="M168 262 Q200 284 232 262 L230 330 L170 330Z" fill="${main}"/>
+     <path d="M172 325 C120 380 70 480 60 555 Q200 590 340 555 C330 480 280 380 228 325Z" fill="${main}"/>
+     <path d="M200 330 C186 400 172 500 166 570 Q200 577 234 570 C228 500 214 400 200 330Z" fill="${light}" opacity=".85"/>` +
+    hem + DECO_POS.map(([x, y]) => deco(x, y)).join('') +
+    `<rect x="166" y="318" width="68" height="13" rx="6.5" fill="${accent}"/>` + ribbon(200, 324, 13, accent, light);
+};
+const DRESSES = [
+  { n: 'ピンクの ドレス', d: () => dress('#ff8fc0', '#ffd1e6', '#ff5c8a', (x, y) => heart(x, y, 8, '#fff')) },
+  { n: 'みずいろの ドレス', d: () => dress('#7cc8f5', '#d5efff', '#4a9fe0', (x, y) => star(x, y, 9, '#fff')) },
+  { n: 'きいろの ドレス', d: () => dress('#ffd84a', '#fff3b8', '#ff9f43', (x, y) => flower(x, y, 9, '#fff', '#ff9f43')) },
+  { n: 'むらさきの ドレス', d: () => dress('#b28cf0', '#e4d5ff', '#8a5fd6', (x, y) => star(x, y, 8, '#ffe36b')) },
+  { n: 'みどりの ドレス', d: () => dress('#7fd9a8', '#d3f5e0', '#3fb37c', (x, y) => flower(x, y, 9, '#ffb3d1')) },
+  { n: 'あかの ドレス', d: () => dress('#f2566e', '#ffc2cb', '#c93a55', (x, y) => circle(x, y, 6, '#fff')) },
+  { n: 'にじいろの ドレス', d: () => dress('url(#gRainbow)', '#ffffff', '#ff7fb6', (x, y) => star(x, y, 7, '#fff')) },
+  { n: 'しろの ドレス', d: () => dress('#ffffff', '#fff3c9', '#ffc94a', (x, y) => heart(x, y, 7, '#ffd23f')) },
+];
+
+const BIG = 'x="-1000" width="2400"';
+const cloud = (x, y, s = 1) => `<g fill="#fff" opacity=".9">${circle(x, y, 20 * s, '#fff')}${circle(x + 24 * s, y - 8 * s, 24 * s, '#fff')}${circle(x + 52 * s, y, 20 * s, '#fff')}<rect x="${x}" y="${y}" width="${52 * s}" height="${20 * s}" rx="${10 * s}"/></g>`;
+const tower = x => `<rect x="${x}" y="300" width="64" height="260" fill="#e3d0fa"/><path d="M${x - 10} 300 L${x + 32} 210 L${x + 74} 300Z" fill="#ff9cc8"/>
+  <rect x="${x + 22}" y="340" width="20" height="34" rx="10" fill="#b79ae6"/><rect x="${x + 22}" y="420" width="20" height="34" rx="10" fill="#b79ae6"/>
+  <path d="M${x + 32} 210 L${x + 32} 184 L${x + 52} 192 L${x + 32} 200" fill="#ffd23f" stroke="#ffd23f" stroke-width="2"/>`;
+const BGS = [
+  { n: 'おしろ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gCastle)"/>` + cloud(40, 110) + cloud(290, 70, 0.8) + tower(-6) + tower(342) +
+      `<rect ${BIG} y="545" height="1200" fill="#bfe8a8"/>` },
+  { n: 'おはなばたけ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gGarden)"/>` + circle(340, 80, 38, '#ffe36b') + cloud(30, 90) +
+      `<ellipse cx="200" cy="640" rx="900" ry="150" fill="#9fdc8c"/>` +
+      [[30, 530, '#ff8fb8'], [80, 575, '#fff'], [350, 540, '#ffd23f'], [318, 590, '#ff8fb8'], [10, 600, '#c5a3ff'], [385, 600, '#fff'], [-60, 560, '#ffd23f'], [460, 565, '#c5a3ff']]
+        .map(([x, y, c]) => `<rect x="${x - 2}" y="${y}" width="4" height="26" fill="#5fb86a"/>` + flower(x, y, 15, c, c === '#ffd23f' ? '#ff9f43' : '#ffd84a')).join('') },
+  { n: 'よぞら', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gNight)"/>` +
+      `<path d="M352 50 A40 40 0 1 0 380 118 A32 32 0 1 1 352 50Z" fill="#ffe36b"/>` +
+      [[40, 60, 10], [110, 130, 6], [70, 220, 8], [300, 190, 7], [250, 50, 6], [30, 380, 7], [370, 330, 9], [345, 450, 6], [60, 480, 6], [-80, 150, 9], [470, 240, 8], [-40, 420, 6], [450, 90, 6]]
+        .map(([x, y, r]) => star(x, y, r, '#fff6b8')).join('') +
+      `<ellipse cx="200" cy="660" rx="900" ry="130" fill="#4b3a8c"/>` },
+  { n: 'にじ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSky)"/>` +
+      ['#ff8fa3', '#ffc48a', '#fff08a', '#a5e8a0', '#8fd0ff', '#c5a3ff'].map((c, i) =>
+        `<circle cx="200" cy="470" r="${330 - i * 22}" fill="none" stroke="${c}" stroke-width="23"/>`).join('') +
+      `<rect ${BIG} y="470" height="1200" fill="#fdf6ff"/>` + cloud(-60, 470, 1.8) + cloud(300, 470, 1.8) + cloud(120, 560, 2.2) + cloud(-140, 560, 2) + cloud(330, 570, 2) },
+  { n: 'うみ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSea)"/>` + circle(60, 80, 34, '#ffe36b') + cloud(270, 90) +
+      `<rect ${BIG} y="400" height="200" fill="#5cc8e8"/><path d="M-1000 400 ${Array.from({ length: 60 }, (_, i) => `q20 -16 40 0`).join(' ')} V430 H-1000Z" fill="#8fe3f0"/>
+       <rect ${BIG} y="520" height="1200" fill="#ffe9b8"/>` + star(50, 572, 16, '#ff9f8a') + star(356, 590, 13, '#ffb3d1') +
+      `<path d="M316 560 a14 14 0 0 1 28 0Z" fill="#fff" stroke="#f2c4d6" stroke-width="2"/>` + circle(100, 600, 6, '#fff') },
+  { n: 'キラキラ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gKira)"/>` +
+      [[50, 80, 14], [330, 60, 18], [80, 300, 10], [340, 260, 12], [30, 480, 16], [365, 470, 12], [200, 30, 9], [110, 180, 7], [300, 400, 8], [-70, 200, 14], [470, 150, 12], [-50, 520, 10], [450, 560, 14]]
+        .map(([x, y, r], i) => i % 3 === 2 ? heart(x, y, r * 0.8, '#fff') : star(x, y, r, '#fff')).join('') },
+];
+
+/* ================= カテゴリ ================= */
+const CATS = [
+  { k: 'crown',    ico: '👑', n: 'かんむり',   list: CROWNS,    vb: '140 36 120 90',   at: [200, 80] },
+  { k: 'hair',     ico: '💇‍♀️', n: 'かみがた',   list: HAIRS,     vb: '40 50 320 370',   at: [200, 150] },
+  { k: 'hairColor',ico: '🎨', n: 'かみのいろ', list: HAIR_COLORS, vb: '0 0 100 100',   at: [200, 130] },
+  { k: 'dress',    ico: '👗', n: 'ドレス',     list: DRESSES,   vb: '30 240 340 350',  at: [200, 440] },
+  { k: 'ornament', ico: '🎀', n: 'かみかざり', list: ORNAMENTS, vb: '228 102 52 52',   at: [254, 128] },
+  { k: 'necklace', ico: '📿', n: 'ネックレス', list: NECKLACES, vb: '168 234 64 56',   at: [200, 262] },
+  { k: 'earring',  ico: '💎', n: 'イヤリング', list: EARRINGS,  vb: '124 186 30 30',   at: [200, 200] },
+  { k: 'wand',     ico: '🪄', n: 'ステッキ',   list: WANDS,     vb: '252 196 112 168', at: [308, 236] },
+  { k: 'wings',    ico: '🦋', n: 'はね',       list: WINGS,     vb: '10 190 380 400',  at: [200, 300] },
+  { k: 'bg',       ico: '🏰', n: 'ばしょ',     list: BGS,       vb: '0 0 400 620',     at: [200, 300] },
+];
+const DEFAULTS = Object.fromEntries(CATS.map(c => [c.k, 0]));
+
+/* ================= じょうたい ================= */
+const SAVE_KEY = 'princess-dressup-v1';
+let state = { ...DEFAULTS };
+let muted = false;
+try {
+  const s = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+  for (const c of CATS) if (Number.isInteger(s[c.k]) && c.list[s[c.k]]) state[c.k] = s[c.k];
+  muted = !!s.muted;
+} catch (e) {}
+const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, muted })); } catch (e) {} };
+let curTab = 0;
+
+/* ================= アルバム(つくった おひめさま) ================= */
+const ALBUM_KEY = 'princess-dressup-album-v1', ALBUM_MAX = 100;
+let album = [];
+try {
+  const a = JSON.parse(localStorage.getItem(ALBUM_KEY) || '[]');
+  album = a.filter(e => e && e.s && CATS.every(c => Number.isInteger(e.s[c.k]) && c.list[e.s[c.k]]));
+} catch (e) {}
+const saveAlbum = () => { try { localStorage.setItem(ALBUM_KEY, JSON.stringify(album)); } catch (e) {} };
+const sameLook = (a, b) => CATS.every(c => a[c.k] === b[c.k]);
+function addToAlbum() {
+  if (album[0] && sameLook(album[0].s, state)) return;
+  album.unshift({ t: Date.now(), s: { ...state } });
+  if (album.length > ALBUM_MAX) album.length = ALBUM_MAX;
+  saveAlbum();
+}
+const dateLabel = t => { const d = new Date(t); return `${d.getMonth() + 1}がつ ${d.getDate()}にち`; };
+
+/* ================= おと ================= */
+let actx = null;
+const tone = (freq, at = 0, dur = 0.18, type = 'sine', vol = 0.18) => {
+  if (muted) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + at;
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + 0.05);
+  } catch (e) {}
+};
+const SCALE = [523, 587, 659, 784, 880, 1047];
+const sfx = {
+  on() { const i = Math.floor(Math.random() * 4); tone(SCALE[i], 0, 0.2, 'triangle'); tone(SCALE[i + 2], 0.09, 0.3, 'triangle'); tone(SCALE[i + 2] * 2, 0.18, 0.35, 'sine', 0.08); },
+  off() { tone(440, 0, 0.12, 'sine', 0.12); tone(330, 0.07, 0.15, 'sine', 0.1); },
+  tab() { tone(700, 0, 0.1, 'sine', 0.12); },
+  move() { tone(620, 0, 0.05, 'sine', 0.06); },
+  fanfare() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.13, 0.35, 'triangle', 0.16)); },
+};
+const speak = text => {
+  if (muted || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP'; u.rate = 0.95; u.pitch = 1.4;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+};
+
+/* ================= えがく ================= */
+const $ = id => document.getElementById(id);
+const hairColor = () => HAIR_COLORS[state.hairColor].c;
+const layer = (k, html) => `<g data-k="${k}">${html}</g>`;
+
+const FACE =
+  `<g class="eyes">` + mirror(`<ellipse cx="177" cy="180" rx="9" ry="12" fill="#4a2c2a"/>${circle(174, 175, 3.6, '#fff')}${circle(180, 184, 1.8, '#fff')}
+    <path d="M167 172 L162 168 M169 168 L166 163" stroke="#4a2c2a" stroke-width="2.4" stroke-linecap="round"/>`) + `</g>` +
+  mirror(circle(160, 200, 11, '#ff9cb8', 'opacity=".55"')) +
+  `<path d="M188 206 Q200 219 212 206" stroke="#e2557a" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+
+function dollHTML(st = state) {
+  const state = st, c = HAIR_COLORS[st.hairColor].c;
+  return layer('wings', WINGS[state.wings].d()) +
+    layer('hair', HAIRS[state.hair].d(c)) +
+    mirror(`<ellipse cx="176" cy="594" rx="19" ry="10" fill="#ffc94a"/>`) +
+    mirror(`<path d="M158 272 L115 345" stroke="${SKIN}" stroke-width="18" stroke-linecap="round"/>`) +
+    `<rect x="188" y="222" width="24" height="40" fill="${SKIN}"/>
+     <path d="M168 262 Q200 244 232 262 L232 300 L168 300Z" fill="${SKIN}"/>` +
+    layer('dress', DRESSES[state.dress].d()) +
+    layer('wand', WANDS[state.wand].d()) +
+    mirror(circle(115, 347, 11.5, SKIN)) +
+    mirror(circle(139, 184, 9, SKIN)) +
+    circle(200, 170, 62, SKIN) + FACE +
+    layer('hairColor', BANGS(c)) +
+    layer('earring', EARRINGS[state.earring].d()) +
+    layer('necklace', NECKLACES[state.necklace].d()) +
+    layer('crown', CROWNS[state.crown].d()) +
+    layer('ornament', ORNAMENTS[state.ornament].d());
+}
+
+const sceneHTML = st => `<g>${BGS[st.bg].d()}</g><g>${dollHTML(st)}</g>`;
+
+function renderDoll(popKey) {
+  $('bgL').innerHTML = BGS[state.bg].d();
+  $('doll').innerHTML = dollHTML();
+  if (popKey && popKey !== 'bg') {
+    const g = $('doll').querySelector(`[data-k="${popKey}"]`);
+    if (g) g.classList.add('pop');
+  }
+}
+
+function thumb(cat, i) {
+  const it = cat.list[i];
+  if (it.none) return `<span class="none">なし</span>`;
+  if (cat.k === 'hairColor') return `<svg viewBox="${cat.vb}">${circle(50, 50, 34, it.c)}${circle(39, 39, 9, '#fff', 'opacity=".45"')}</svg>`;
+  let inner = it.d(hairColor());
+  if (cat.k === 'hair') inner += circle(200, 170, 62, SKIN) + BANGS(hairColor());
+  const par = cat.k === 'bg' ? 'xMidYMid slice' : 'xMidYMid meet';
+  return `<svg viewBox="${cat.vb}" preserveAspectRatio="${par}">${inner}</svg>`;
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = CATS.map((c, i) =>
+    `<button class="tab${i === curTab ? ' on' : ''}" data-i="${i}" data-nav="tab-${i}"><span class="ico">${c.ico}</span><span class="lbl">${c.n}</span></button>`).join('');
+  applyCursor();
+}
+function renderItems() {
+  const cat = CATS[curTab];
+  $('items').innerHTML = cat.list.map((it, i) =>
+    `<button class="item${state[cat.k] === i ? ' on' : ''}" data-i="${i}" data-nav="item-${i}" aria-label="${it.n}">${thumb(cat, i)}</button>`).join('');
+  applyCursor();
+}
+function selectTab(i) {
+  curTab = i;
+  renderTabs(); renderItems();
+  $('items').scrollTop = 0;
+  sfx.tab(); speak(CATS[curTab].n);
+}
+
+/* ================= キーボードの カーソル ================= */
+const curKey = {};
+const scopeEl = () =>
+  !$('confirm').hidden ? $('confirm') : !$('viewer').hidden ? $('viewer') : !$('album').hidden ? $('album') :
+  document.body.classList.contains('done') ? $('doneBtns') : $('panel');
+const navList = () => [...scopeEl().querySelectorAll('button[data-nav]')].filter(b => b.offsetParent !== null);
+function applyCursor(scroll) {
+  document.querySelectorAll('.cur').forEach(n => n.classList.remove('cur'));
+  const sc = scopeEl(), list = navList();
+  if (!list.length) return null;
+  const el = list.find(b => b.dataset.nav === curKey[sc.id]) || list[0];
+  curKey[sc.id] = el.dataset.nav;
+  el.classList.add('cur');
+  if (scroll) el.scrollIntoView({ block: 'nearest' });
+  return el;
+}
+function setCursor(key) { curKey[scopeEl().id] = key; return applyCursor(true); }
+function moveCursor(dx, dy) {
+  const list = navList(), cur = applyCursor();
+  if (!cur) return;
+  const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const cand = [];
+  for (const b of list) {
+    if (b === cur) continue;
+    const q = b.getBoundingClientRect(), x = q.left + q.width / 2, y = q.top + q.height / 2;
+    if (dx) { if ((x - cx) * dx > 4 && q.bottom > r.top + 4 && q.top < r.bottom - 4) cand.push({ b, main: Math.abs(x - cx), sub: 0 }); }
+    else if ((y - cy) * dy > 4) cand.push({ b, main: Math.abs(y - cy), sub: Math.abs(x - cx) });
+  }
+  let best = null;
+  const isTab = cur.classList.contains('tab'), isItem = cur.classList.contains('item');
+  if (isTab && dy > 0) {
+    // しゅるいから したへ → その なかみへ(2だんめの しゅるいは ←→ で いく)
+    best = list.find(b => b.dataset.nav === 'item-' + state[CATS[curTab].k]);
+  } else if (isItem && dy < 0 && !cand.some(c => c.b.classList.contains('item'))) {
+    best = list.find(b => b.dataset.nav === 'tab-' + curTab);
+  } else if (cand.length) {
+    const near = Math.min(...cand.map(c => c.main));
+    best = cand.filter(c => c.main <= near + 10).sort((a, b) => a.sub - b.sub)[0].b;
+  } else if (dx) {
+    // はしっこでは つぎの だん へ
+    best = list[(list.indexOf(cur) + dx + list.length) % list.length];
+  }
+  if (!best || best === cur) return;
+  curKey[scopeEl().id] = best.dataset.nav;
+  if (best.classList.contains('tab') && +best.dataset.i !== curTab) selectTab(+best.dataset.i);
+  else sfx.move();
+  applyCursor(true);
+}
+function goBack() {
+  if (!$('confirm').hidden) $('delNo').click();
+  else if (!$('viewer').hidden) $('viewClose').click();
+  else if (!$('album').hidden) $('albumClose').click();
+  else if (document.body.classList.contains('done')) $('btnBack').click();
+}
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === 'ArrowLeft') moveCursor(-1, 0);
+  else if (k === 'ArrowRight') moveCursor(1, 0);
+  else if (k === 'ArrowUp') moveCursor(0, -1);
+  else if (k === 'ArrowDown') moveCursor(0, 1);
+  else if (k === 'Enter' || k === ' ') {
+    if (!e.repeat) {
+      const cur = applyCursor(true);
+      // しゅるいの ボタンで きめると、その なかみへ すすむ
+      if (cur && cur.classList.contains('tab')) { sfx.tab(); setCursor('item-' + state[CATS[curTab].k]); }
+      else if (cur) cur.click();
+    }
+  }
+  else if (k === 'Escape' || k === 'Backspace') goBack();
+  else if (/^[0-9]$/.test(k) && scopeEl().id === 'panel') { const i = k === '0' ? 9 : +k - 1; curKey.panel = 'tab-' + i; selectTab(i); applyCursor(true); }
+  else if (k === 'm' || k === 'M') $('btnSound').click();
+  else return;
+  e.preventDefault();
+  document.body.classList.add('kbd');
+});
+document.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') document.body.classList.remove('kbd'); });
+document.addEventListener('focusin', e => { if (e.target.blur) e.target.blur(); });
+if (!('ontouchstart' in window)) document.body.classList.add('kbd');
+
+/* ================= アルバムの がめん ================= */
+let viewIdx = 0;
+function renderAlbum() {
+  $('albumGrid').innerHTML = album.length
+    ? album.map((a, i) => `<button class="card" data-i="${i}" data-nav="card-${i}"><svg viewBox="0 0 400 620">${sceneHTML(a.s)}</svg><span class="date">${dateLabel(a.t)}</span></button>`).join('')
+    : `<p class="empty">まだ なにも ないよ<br>「✨ できた!」を おすと ここに のこるよ</p>`;
+}
+function openAlbum() {
+  renderAlbum();
+  $('album').hidden = false;
+  setCursor(album.length ? 'card-0' : 'close');
+  sfx.tab(); speak('アルバム');
+}
+function showViewer(i) {
+  viewIdx = i;
+  $('viewSvg').innerHTML = sceneHTML(album[i].s);
+  $('viewDate').textContent = `${dateLabel(album[i].t)} (${i + 1} / ${album.length})`;
+  $('viewer').hidden = false; $('confirm').hidden = true; $('viewBtns').hidden = false;
+  applyCursor();
+}
+function closeViewer() {
+  $('viewer').hidden = true; $('confirm').hidden = true;
+  if (album.length) setCursor('card-' + Math.min(viewIdx, album.length - 1)); else setCursor('close');
+}
+$('btnAlbum').addEventListener('click', openAlbum);
+$('btnAlbum2').addEventListener('click', openAlbum);
+$('albumClose').addEventListener('click', () => { $('album').hidden = true; sfx.tab(); applyCursor(); });
+$('albumGrid').addEventListener('click', e => {
+  const b = e.target.closest('.card'); if (!b) return;
+  curKey.viewer = 'next'; showViewer(+b.dataset.i); sfx.on();
+});
+$('viewPrev').addEventListener('click', () => { showViewer((viewIdx - 1 + album.length) % album.length); sfx.tab(); });
+$('viewNext').addEventListener('click', () => { showViewer((viewIdx + 1) % album.length); sfx.tab(); });
+$('viewClose').addEventListener('click', () => { closeViewer(); sfx.tab(); });
+$('viewPlay').addEventListener('click', () => {
+  state = { ...album[viewIdx].s }; save();
+  $('viewer').hidden = true; $('album').hidden = true;
+  exitDone();
+  renderDoll(); renderItems();
+  sfx.on(); sparkle(200, 300, 16, 180);
+});
+$('viewDel').addEventListener('click', () => {
+  $('viewBtns').hidden = true; $('confirm').hidden = false;
+  setCursor('no'); sfx.tab();
+});
+$('delNo').addEventListener('click', () => { $('confirm').hidden = true; $('viewBtns').hidden = false; applyCursor(); sfx.tab(); });
+$('delYes').addEventListener('click', () => {
+  album.splice(viewIdx, 1); saveAlbum(); renderAlbum(); sfx.off();
+  if (album.length) showViewer(Math.min(viewIdx, album.length - 1)); else closeViewer();
+});
+
+function sparkle(cx, cy, n = 7, spread = 60) {
+  const fx = $('fx'), cols = ['#fff', '#ffe36b', '#ffb3d1', '#c5a3ff'];
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const x = cx + (Math.random() - 0.5) * spread * 2, y = cy + (Math.random() - 0.5) * spread * 2;
+    s += star(Math.round(x), Math.round(y), 8 + Math.random() * 10, cols[i % cols.length], `class="spark" style="animation-delay:${(Math.random() * 0.25).toFixed(2)}s"`);
+  }
+  g.innerHTML = s; fx.appendChild(g);
+  setTimeout(() => g.remove(), 1200);
+}
+
+/* ================= そうさ ================= */
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  curKey.panel = b.dataset.nav;
+  selectTab(+b.dataset.i);
+});
+
+$('items').addEventListener('click', e => {
+  const b = e.target.closest('.item'); if (!b) return;
+  const cat = CATS[curTab];
+  let i = +b.dataset.i;
+  curKey.panel = b.dataset.nav;
+  // つけているものを もういちど おすと はずれる
+  if (cat.list[0].none && i === state[cat.k]) i = 0;
+  state[cat.k] = i; save();
+  renderDoll(cat.k); renderItems();
+  if (cat.list[i].none) { sfx.off(); }
+  else { sfx.on(); sparkle(cat.at[0], cat.at[1], 7, cat.k === 'dress' || cat.k === 'wings' || cat.k === 'bg' ? 120 : 50); speak(cat.list[i].n); }
+});
+
+$('btnRandom').addEventListener('click', () => {
+  for (const c of CATS) {
+    const min = c.list[0].none && Math.random() < 0.8 ? 1 : 0;
+    state[c.k] = min + Math.floor(Math.random() * (c.list.length - min));
+  }
+  save(); renderDoll(); renderItems();
+  sfx.on(); sparkle(200, 300, 16, 180);
+});
+
+$('btnReset').addEventListener('click', () => {
+  state = { ...DEFAULTS }; save();
+  renderDoll(); renderItems(); sfx.off();
+});
+
+$('btnSound').addEventListener('click', () => {
+  muted = !muted; save();
+  $('btnSound').textContent = muted ? '🔇' : '🔊';
+  if (muted && window.speechSynthesis) speechSynthesis.cancel();
+  sfx.tab();
+});
+
+let sparkTimer = null;
+$('btnDone').addEventListener('click', () => {
+  addToAlbum();
+  document.body.classList.add('done');
+  setCursor('back');
+  sfx.fanfare(); speak('わあ、すてきな おひめさま!');
+  const stage = $('stage'), em = ['✨', '💖', '⭐', '🌸', '🎀', '💎'];
+  for (let i = 0; i < 36; i++) {
+    const s = document.createElement('span');
+    s.className = 'confetti'; s.textContent = em[i % em.length];
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.fontSize = (18 + Math.random() * 26) + 'px';
+    s.style.animationDuration = (3 + Math.random() * 4) + 's';
+    s.style.animationDelay = (-Math.random() * 6) + 's';
+    stage.appendChild(s);
+  }
+  sparkle(200, 300, 18, 200);
+  sparkTimer = setInterval(() => sparkle(200, 300, 6, 200), 900);
+});
+
+function exitDone() {
+  document.body.classList.remove('done');
+  clearInterval(sparkTimer);
+  document.querySelectorAll('.confetti').forEach(n => n.remove());
+  applyCursor();
+}
+$('btnBack').addEventListener('click', () => { exitDone(); sfx.tab(); });
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+$('btnSound').textContent = muted ? '🔇' : '🔊';
+renderDoll(); renderTabs(); renderItems();
+})();
+</script>
+</body>
+</html>
