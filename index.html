@@ -86,18 +86,19 @@
     display: flex; flex-direction: column; min-height: 0; gap: 10px; padding: 10px;
     background: var(--cream); box-shadow: 0 0 20px rgba(160, 80, 130, 0.25); z-index: 1;
   }
-  #tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  #tabs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
   .tab {
-    border-radius: 18px; background: #fff; padding: 6px 2px 4px;
-    border: 4px solid var(--pink-light); display: flex; flex-direction: column; align-items: center; gap: 2px;
+    border-radius: 14px; background: #fff; padding: 4px 0 3px; min-width: 0; overflow: hidden;
+    border: 3px solid var(--pink-light); display: flex; flex-direction: column; align-items: center; gap: 1px;
   }
-  .tab .ico { font-size: clamp(26px, 4.5vmin, 40px); line-height: 1.1; }
-  .tab .lbl { font-size: clamp(10px, 1.7vmin, 14px); font-weight: 700; white-space: nowrap; }
+  .tab .ico { font-size: clamp(22px, 4vmin, 36px); line-height: 1.1; }
+  .tab .lbl { font-size: clamp(9px, 1.45vmin, 13px); font-weight: 700; white-space: nowrap; letter-spacing: -0.04em; }
+  @media (max-width: 640px) { .tab { padding: 6px 0; } .tab .lbl { display: none; } }
   .tab.on { background: var(--pink); border-color: var(--pink-dark); color: #fff; transform: scale(1.04); }
   #items {
     flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(92px, 15vmin, 130px), 1fr)); gap: 10px;
-    align-content: start; padding: 10px;
+    grid-auto-rows: max-content; align-content: start; padding: 10px;
   }
   .item {
     position: relative; aspect-ratio: 1; border-radius: 22px; background: #fff;
@@ -174,6 +175,10 @@
     <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#fdf6ff"/></linearGradient>
     <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe3f0"/><stop offset="1" stop-color="#d9fbff"/></linearGradient>
     <linearGradient id="gKira" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3da"/><stop offset="1" stop-color="#c3a6ff"/></linearGradient>
+    <linearGradient id="gSpace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1038"/><stop offset="1" stop-color="#4a3a9a"/></linearGradient>
+    <linearGradient id="gSnow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d4ff"/><stop offset="1" stop-color="#f4faff"/></linearGradient>
+    <linearGradient id="gCandy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd6ec"/><stop offset="1" stop-color="#fff6d6"/></linearGradient>
+    <linearGradient id="gStage" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1a52"/><stop offset="1" stop-color="#6a4ab0"/></linearGradient>
   </defs>
 </svg>
 
@@ -280,6 +285,7 @@ const HAIRS = [
 ];
 const BANGS = c => `<path d="M137 176 C128 68 272 68 263 176 C256 150 236 134 206 134 C200 150 176 162 137 176Z" fill="${c}"/>`;
 
+const HAT_VB = '96 44 208 110';
 const CROWNS = [
   NONE,
   { n: 'きんの かんむり', d: () => `<path d="M162 112 L154 62 L180 88 L200 52 L220 88 L246 62 L238 112Z" fill="#ffd23f" stroke="#ffd23f" stroke-width="6" stroke-linejoin="round"/>
@@ -295,6 +301,25 @@ const CROWNS = [
   { n: 'ハートの ティアラ', d: () => `<path d="M158 114 Q200 98 242 114" stroke="#ff9cc8" stroke-width="9" fill="none" stroke-linecap="round"/>` +
       heart(200, 84, 19, '#ff5c8a') + heart(168, 100, 9, '#ffb3d1') + heart(232, 100, 9, '#ffb3d1') + circle(193, 78, 4, '#fff', 'opacity=".8"') },
   { n: 'おおきな リボン', d: () => ribbon(200, 92, 44, '#ff7fb6', '#ff5c8a') },
+  { n: 'キャップ', vb: HAT_VB, d: () => `<path d="M139 128 Q136 70 200 70 Q264 70 261 128Z" fill="#f2566e"/>
+      <path d="M146 122 Q104 116 86 136 Q118 146 152 134Z" fill="#c93a55"/>` + circle(200, 72, 5, '#fff') + star(206, 104, 11, '#fff') },
+  { n: 'ニットぼう', vb: HAT_VB, d: () => `<path d="M139 122 Q138 66 200 66 Q262 66 261 122Z" fill="#7fd9a8"/>
+      <rect x="134" y="108" width="132" height="24" rx="12" fill="#d3f5e0"/>` +
+      [156, 178, 200, 222, 244].map(x => `<path d="M${x} 112 V128" stroke="#7fd9a8" stroke-width="3" stroke-linecap="round"/>`).join('') + circle(200, 60, 15, '#ff8fb8') },
+  { n: 'ベレーぼう', vb: HAT_VB, d: () => `<ellipse cx="204" cy="98" rx="72" ry="30" transform="rotate(-8 204 98)" fill="#c93a55"/>
+      <path d="M204 68 L208 55" stroke="#c93a55" stroke-width="6" stroke-linecap="round"/>` },
+  { n: 'バケットハット', vb: HAT_VB, d: () => `<path d="M152 116 L160 72 Q200 60 240 72 L248 116Z" fill="#ffd84a"/>
+      <path d="M152 110 L120 140 Q200 122 280 140 L248 110Z" fill="#ffc94a"/>` + flower(224, 96, 11, '#fff', '#ff9f43') },
+  { n: 'むぎわらぼうし', vb: HAT_VB, d: () => `<ellipse cx="200" cy="124" rx="100" ry="20" fill="#f0d08a"/>
+      <path d="M146 122 Q146 64 200 64 Q254 64 254 122Z" fill="#f5dc9e"/>
+      <path d="M146 110 Q200 122 254 110 L254 122 Q200 134 146 122Z" fill="#ff7fb6"/>` + ribbon(246, 118, 11, '#ff7fb6', '#ff5c8a') },
+  { n: 'ヘッドホン', vb: '100 70 200 150', d: () => `<path d="M136 176 Q130 82 200 82 Q270 82 264 176" stroke="#a678e8" stroke-width="10" fill="none" stroke-linecap="round"/>` +
+      mirror(`<rect x="122" y="164" width="24" height="46" rx="11" fill="#ff7fb6"/>` + circle(134, 187, 6, '#fff')) },
+  { n: 'ねこみみ', vb: HAT_VB, d: () => `<path d="M142 132 Q200 84 258 132" stroke="#3a2e3f" stroke-width="8" fill="none" stroke-linecap="round"/>` +
+      mirror(`<path d="M150 118 L152 74 L186 100Z" fill="#3a2e3f" stroke="#3a2e3f" stroke-width="5" stroke-linejoin="round"/><path d="M158 106 L159 88 L174 99Z" fill="#ff9cc8"/>`) },
+  { n: 'うさみみ', vb: '100 6 200 140', d: () => `<path d="M142 132 Q200 84 258 132" stroke="#ff9cc8" stroke-width="8" fill="none" stroke-linecap="round"/>` +
+      mirror(`<ellipse cx="170" cy="62" rx="14" ry="42" transform="rotate(-10 170 62)" fill="#fff" stroke="#ffb3d1" stroke-width="3"/>
+        <ellipse cx="170" cy="64" rx="6" ry="28" transform="rotate(-10 170 64)" fill="#ffb3d1"/>`) },
 ];
 
 const ORNAMENTS = [
@@ -305,6 +330,10 @@ const ORNAMENTS = [
   { n: 'ハート', d: () => heart(254, 128, 14, '#ff5c8a') },
   { n: 'ちょうちょ', d: () => circle(244, 121, 10, '#8fd0ff') + circle(264, 121, 10, '#8fd0ff') + circle(246, 136, 7, '#c5a3ff') + circle(262, 136, 7, '#c5a3ff') +
       `<rect x="252" y="114" width="4" height="26" rx="2" fill="#6b3a5b"/>` },
+  { n: 'ヘアピン', d: () => `<rect x="240" y="116" width="28" height="7" rx="3.5" fill="#ffd23f" transform="rotate(-20 254 120)"/>
+      <rect x="240" y="130" width="28" height="7" rx="3.5" fill="#5cc8e8" transform="rotate(-20 254 134)"/>` },
+  { n: 'いちご', d: () => heart(254, 131, 13, '#f2566e') + circle(248, 118, 5, '#5fb86a') + circle(254, 116, 5, '#5fb86a') + circle(260, 118, 5, '#5fb86a') +
+      circle(249, 128, 1.6, '#fff') + circle(259, 128, 1.6, '#fff') + circle(254, 135, 1.6, '#fff') },
 ];
 
 const neckArc = (c, w = 4) => `<path d="M179 244 Q200 288 221 244" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
@@ -318,6 +347,9 @@ const NECKLACES = [
   { n: 'おほしさまの ネックレス', d: () => neckArc('#dfe8f5') + star(200, 268, 10, '#ffd23f') },
   { n: 'ほうせきの ネックレス', d: () => neckArc('#ffd23f') + `<path d="M200 258 L209 268 L200 281 L191 268Z" fill="#5cc8e8" stroke="#fff" stroke-width="1.5"/>` },
   { n: 'おはなの ネックレス', d: () => neckArc('#7fd18b') + flower(200, 267, 10, '#ffb3d1') },
+  { n: 'チョーカー', d: () => `<path d="M188 240 Q200 247 212 240" stroke="#3a2e3f" stroke-width="7" fill="none"/>` + heart(200, 250, 5, '#ff5c8a') },
+  { n: 'チェーンの ネックレス', d: () => `<path d="M180 246 Q200 300 220 246" stroke="#ffd23f" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="1 7"/>` +
+      circle(200, 276, 8.5, '#ffd23f') + star(200, 276, 5, '#fff') },
 ];
 
 const EARRINGS = [
@@ -327,6 +359,7 @@ const EARRINGS = [
   { n: 'おほしさまの イヤリング', d: () => mirror(star(139, 200, 8, '#ffd23f')) },
   { n: 'ほうせきの イヤリング', d: () => mirror(`<path d="M139 193 L145 203 Q139 214 133 203Z" fill="#a678e8" stroke="#fff" stroke-width="1.2"/>`) },
   { n: 'おはなの イヤリング', d: () => mirror(flower(139, 200, 8, '#8fd0ff')) },
+  { n: 'わっかの イヤリング', d: () => mirror(circle(139, 204, 7, 'none', 'stroke="#ffd23f" stroke-width="3"')) },
 ];
 
 const stick = c => `<path d="M286 352 L306 246" stroke="${c}" stroke-width="7" stroke-linecap="round"/>`;
@@ -368,6 +401,7 @@ const dress = (main, light, accent, deco) => {
     `<rect x="166" y="318" width="68" height="13" rx="6.5" fill="${accent}"/>` + ribbon(200, 324, 13, accent, light);
 };
 const DRESSES = [
+  NONE,
   { n: 'ピンクの ドレス', d: () => dress('#ff8fc0', '#ffd1e6', '#ff5c8a', (x, y) => heart(x, y, 8, '#fff')) },
   { n: 'みずいろの ドレス', d: () => dress('#7cc8f5', '#d5efff', '#4a9fe0', (x, y) => star(x, y, 9, '#fff')) },
   { n: 'きいろの ドレス', d: () => dress('#ffd84a', '#fff3b8', '#ff9f43', (x, y) => flower(x, y, 9, '#fff', '#ff9f43')) },
@@ -378,11 +412,151 @@ const DRESSES = [
   { n: 'しろの ドレス', d: () => dress('#ffffff', '#fff3c9', '#ffc94a', (x, y) => heart(x, y, 7, '#ffd23f')) },
 ];
 
+/* ---------- トップス・ボトムス(ドレスが「なし」のときに きる) ---------- */
+const armAt = t => [(158 - 43 * t).toFixed(1), (272 + 73 * t).toFixed(1)];
+const sleeves = (c, t, w = 25) => { const [x, y] = armAt(t); return mirror(`<path d="M159 271 L${x} ${y}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`); };
+const LONG = 0.8, SHORT = 0.26;
+const shirt = (c, hem = 336, neck = 278) => `<path d="M165 261 Q200 ${neck} 235 261 L236 ${hem} Q200 ${hem + 6} 164 ${hem}Z" fill="${c}"/>`;
+const TOPS = [
+  { n: 'ハートの Tシャツ', d: () => sleeves('#ffe066', SHORT) + shirt('#ffe066') + heart(200, 304, 13, '#ff5c8a') },
+  { n: 'ボーダーの シャツ', d: () => sleeves('#3d5a9e', LONG) + shirt('#3d5a9e') + [284, 300, 316].map(y => `<rect x="165.5" y="${y}" width="69" height="7" fill="#fff"/>`).join('') },
+  { n: 'パーカー', d: () => sleeves('#b79ae6', LONG, 27) + shirt('#b79ae6', 350) +
+      mirror(`<path d="M166 262 Q176 246 190 251 Q197 266 200 284 Q178 280 166 262Z" fill="#9a7bd6"/><path d="M194 284 V304" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`) +
+      `<path d="M178 320 H222 L228 346 H172Z" fill="#9a7bd6"/>` },
+  { n: 'スタジャン', d: () => sleeves('#fff3d6', LONG, 27) + shirt('#e8455f', 338) +
+      `<path d="M167 262 Q200 281 233 262" stroke="#2f3f7a" stroke-width="7" fill="none" stroke-linecap="round"/>
+       <rect x="163" y="330" width="74" height="11" rx="5" fill="#2f3f7a"/><path d="M200 274 V330" stroke="#c93a55" stroke-width="2.5"/>` +
+      [288, 304, 320].map(y => circle(200, y, 3, '#fff')).join('') + star(182, 298, 9, '#ffd23f') },
+  { n: 'デニムジャケット', d: () => sleeves('#6f9fe0', LONG, 27) + shirt('#fff') +
+      mirror(`<path d="M165 261 Q178 268 190 271 L192 338 L163 338Z" fill="#6f9fe0"/><path d="M167 261 L190 271 L181 290Z" fill="#5a88cc"/>
+        <rect x="169" y="300" width="16" height="13" rx="3" fill="#5a88cc"/>`) + heart(200, 300, 6, '#ff7fb6') },
+  { n: 'ジャージ', d: () => { const [x, y] = armAt(LONG); return sleeves('#ff7fb6', LONG, 27) +
+      mirror(`<path d="M159 271 L${x} ${y}" stroke="#fff" stroke-width="5" stroke-linecap="round"/>`) + shirt('#ff7fb6', 338, 262) +
+      `<rect x="183" y="248" width="34" height="17" rx="7" fill="#e85a9b"/><path d="M200 252 V342" stroke="#fff" stroke-width="3.5"/>` + circle(200, 268, 4, '#ffd23f'); } },
+  { n: 'へそだし トップス', d: () => sleeves('#9be36a', SHORT) + shirt('#9be36a', 306) + star(200, 291, 11, '#fff') },
+  { n: 'タンクトップ', d: () => `<path d="M171 257 H183 Q200 290 217 257 H229 L236 296 V336 Q200 342 164 336 V296Z" fill="#ff9f43"/>` + flower(200, 310, 11, '#fff') },
+  { n: 'ふわふわ セーター', d: () => sleeves('#ffd1e6', LONG, 29) + shirt('#ffd1e6', 340, 258) +
+      `<rect x="184" y="240" width="32" height="20" rx="8" fill="#ffb3d1"/><rect x="163" y="332" width="74" height="11" rx="5" fill="#ffb3d1"/>` +
+      [178, 200, 222].map(x => heart(x, 300, 7, '#ff7fb6')).join('') },
+  { n: 'にじの Tシャツ', d: () => sleeves('#8fd0ff', SHORT) + shirt('url(#gRainbow)') + star(200, 304, 12, '#fff') },
+  { n: 'フリルの ブラウス', d: () => mirror(`<ellipse cx="160" cy="270" rx="20" ry="16" fill="#d5efff"/>`) + shirt('#d5efff') +
+      [0.1, 0.26, 0.42, 0.58, 0.74, 0.9].map(t => circle((165 + 70 * t).toFixed(1), (261 + 34 * t * (1 - t)).toFixed(1), 6.5, '#fff')).join('') +
+      ribbon(200, 286, 10, '#ff7fb6', '#ff5c8a') },
+  { n: 'チェックの シャツ', d: () => sleeves('#f2566e', LONG) + shirt('#f2566e') +
+      `<g stroke="#fff" stroke-width="3" opacity=".55"><path d="M182 270 V336 M200 274 V338 M218 270 V336 M165 292 H235 M165 314 H235"/></g>` +
+      mirror(`<path d="M184 258 L200 276 L180 282Z" fill="#fff"/>`) },
+];
+
+const legX = y => 186 - 8 * (y - 350) / 230;
+const pants = (c, yb, wb) => { const x = legX(yb); return `<path d="M167 322 H233 L237 352 H163Z" fill="${c}"/>` +
+  mirror(`<path d="M163 350 H200.5 V384 L${(x + wb).toFixed(1)} ${yb} H${(x - wb).toFixed(1)}Z" fill="${c}"/>`); };
+const cuffs = (c, yb, wb, h = 12) => { const x = legX(yb); return mirror(`<rect x="${(x - wb - 1.5).toFixed(1)}" y="${yb - h}" width="${wb * 2 + 3}" height="${h}" rx="4" fill="${c}"/>`); };
+const skirt = (c, yb, fl, band) => `<path d="M168 324 H232 L${232 + fl} ${yb} Q200 ${yb + 14} ${168 - fl} ${yb}Z" fill="${c}"/><rect x="165" y="319" width="70" height="11" rx="5.5" fill="${band}"/>`;
+// むねあて(トップスの うえに かさねる)
+const bib = (c, pocket) => mirror(`<path d="M183 290 L175 258" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`) +
+  `<rect x="177" y="282" width="46" height="46" rx="7" fill="${c}"/><rect x="189" y="296" width="22" height="18" rx="5" fill="${pocket}"/>` + mirror(circle(183, 290, 4, '#ffd23f'));
+const BIB_VB = '95 250 210 330';
+const BOTTOMS = [
+  { n: 'デニムパンツ', d: () => pants('#5b8fd9', 566, 15) + cuffs('#a9c9f5', 566, 15) +
+      mirror(`<path d="M169 334 Q178 350 191 337" stroke="#3d6fb8" stroke-width="2.5" fill="none"/>`) + circle(200, 331, 3.5, '#ffd23f') },
+  { n: 'ピンクの ミニスカート', d: () => skirt('#ff8fc0', 400, 26, '#ff5c8a') + [[178, 380], [200, 388], [222, 380]].map(([x, y]) => heart(x, y, 6, '#fff')).join('') },
+  { n: 'ショートパンツ', d: () => pants('#7cb0ee', 398, 18) + cuffs('#d5e6fb', 398, 18, 9) + circle(200, 331, 3.5, '#ffd23f') },
+  { n: 'カーゴパンツ', d: () => pants('#a8b06a', 562, 21) +
+      mirror(`<rect x="156" y="432" width="20" height="30" rx="4" fill="#8f9850"/><rect x="156" y="432" width="20" height="9" rx="4" fill="#7c8544"/>`) +
+      `<rect x="165" y="320" width="70" height="9" rx="4" fill="#7c8544"/>` },
+  { n: 'ワイドパンツ', d: () => pants('#f3e3c3', 572, 26) + `<rect x="165" y="319" width="70" height="11" rx="5.5" fill="#d9b98a"/>` + ribbon(200, 325, 9, '#d9b98a', '#c9a374') },
+  { n: 'プリーツスカート', d: () => skirt('#3f4f9a', 412, 30, '#2f3f7a') + `<g stroke="#fff" stroke-width="2" opacity=".35">` +
+      [-20, -10, 0, 10, 20].map(dx => `<path d="M${200 + dx} 331 L${200 + dx * 1.9} ${418 - Math.abs(dx) * 0.2}"/>`).join('') + `</g>` },
+  { n: 'ジャージパンツ', d: () => pants('#ff7fb6', 566, 16) +
+      mirror(`<path d="M166 326 L${(legX(566) - 12).toFixed(1)} 566" stroke="#fff" stroke-width="5"/>`) + cuffs('#e85a9b', 566, 16, 9) },
+  { n: 'チュチュ', d: () => skirt('#d9c2ff', 398, 44, '#a678e8') +
+      Array.from({ length: 9 }, (_, i) => circle(124 + i * 19, (402 + 28 * (i / 8) * (1 - i / 8)).toFixed(1), 13, '#eadcff')).join('') },
+  { n: 'おほしさまの レギンス', d: () => pants('#8a5fd6', 562, 13) + mirror(star(184, 420, 6, '#ffe36b') + star(181, 480, 6, '#ffe36b') + star(180, 535, 5, '#ffe36b')) },
+  { n: 'オーバーオール', vb: BIB_VB, d: () => pants('#5b8fd9', 566, 17) + cuffs('#a9c9f5', 566, 17), o: () => bib('#5b8fd9', '#a9c9f5') },
+  { n: 'サロペット スカート', vb: BIB_VB, d: () => skirt('#f2566e', 418, 30, '#c93a55'), o: () => bib('#f2566e', '#ffc2cb') },
+  { n: 'ロングスカート', d: () => skirt('#7fd9a8', 520, 40, '#3fb37c') + `<path d="M131 506 H269 L272 520 Q200 534 128 520Z" fill="#d3f5e0"/>` +
+      [[160, 440], [240, 440], [200, 470]].map(([x, y]) => flower(x, y, 9, '#fff', '#ffd84a')).join('') },
+];
+
+/* ---------- くつ ---------- */
+const bootShape = (top, c) => `<path d="M164 ${top} H191 L193 590 Q196 604 176 604 Q156 604 160 590Z" fill="${c}"/>`;
+const SHOES = [
+  { n: 'きんの くつ', d: () => mirror(`<ellipse cx="176" cy="594" rx="19" ry="10" fill="#ffc94a"/>`) },
+  { n: 'スニーカー', d: () => mirror(`<path d="M158 600 Q154 584 170 582 L188 582 Q196 584 196 600Z" fill="#fff" stroke="#d9c7d6" stroke-width="2"/>
+      <rect x="155" y="598" width="43" height="8" rx="4" fill="#ff7fb6"/>
+      <path d="M166 588 L175 595 M175 586 L184 593" stroke="#ff7fb6" stroke-width="3" stroke-linecap="round"/>`) },
+  { n: 'ブーツ', d: () => mirror(bootShape(540, '#a0623a') + `<rect x="162" y="536" width="31" height="10" rx="5" fill="#c98a5a"/><rect x="157" y="600" width="38" height="7" rx="3.5" fill="#6b3f22"/>`) },
+  { n: 'あつぞこの くつ', d: () => mirror(`<path d="M158 594 Q156 578 176 578 Q196 578 196 594Z" fill="#b28cf0"/>
+      <rect x="155" y="592" width="44" height="16" rx="5" fill="#fff" stroke="#d9c7d6" stroke-width="2"/>` + star(176, 586, 5, '#ffe36b')) },
+  { n: 'サンダル', d: () => mirror(`<rect x="156" y="598" width="41" height="7" rx="3.5" fill="#ff9f43"/><ellipse cx="176" cy="592" rx="17" ry="8" fill="${SKIN}"/>
+      <path d="M161 593 Q176 580 191 593" stroke="#ff5c8a" stroke-width="5" fill="none" stroke-linecap="round"/>` + flower(176, 586, 6, '#fff')) },
+  { n: 'リボンの くつ', d: () => mirror(`<ellipse cx="176" cy="594" rx="19" ry="10" fill="#ff7fb6"/>` + ribbon(176, 588, 9, '#fff', '#ffd23f')) },
+  { n: 'ローラースケート', d: () => mirror(`<path d="M164 558 H190 L192 590 Q194 598 176 598 Q158 598 160 590Z" fill="#fff" stroke="#8fd0ff" stroke-width="2.5"/>
+      <rect x="156" y="595" width="40" height="7" rx="3" fill="#8fd0ff"/>` + circle(164, 608, 6.5, '#ff7fb6') + circle(188, 608, 6.5, '#ffd23f') + heart(176, 576, 5, '#ff7fb6')) },
+  { n: 'ながぐつ', d: () => mirror(bootShape(528, '#ffd84a') + `<rect x="162" y="524" width="31" height="10" rx="5" fill="#ff9f43"/>` + circle(176, 560, 5, '#fff')) },
+  { n: 'あかい スニーカー', d: () => mirror(bootShape(562, '#f2566e') + `<rect x="156" y="598" width="40" height="8" rx="4" fill="#fff"/>` + circle(176, 576, 6, '#fff') + star(176, 576, 4, '#f2566e')) },
+  { n: 'ローファー', d: () => mirror(`<rect x="166" y="556" width="23" height="34" rx="6" fill="#fff" stroke="#d9c7d6" stroke-width="2"/>
+      <ellipse cx="176" cy="594" rx="20" ry="10" fill="#5a3a4f"/><rect x="166" y="586" width="20" height="5" rx="2.5" fill="#8a6a7f"/>`) },
+];
+
+/* ---------- めがね ---------- */
+const temples = c => mirror(`<path d="M158 176 L141 180" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`) +
+  `<path d="M194 176 Q200 171 206 176" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+const shades = (lens, frame, o = 0.85) => temples(frame) +
+  mirror(`<rect x="157" y="166" width="38" height="28" rx="11" fill="${lens}" fill-opacity="${o}" stroke="${frame}" stroke-width="4"/>
+    <path d="M165 174 H174" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>`);
+const GLASSES = [
+  NONE,
+  { n: 'くろい サングラス', d: () => shades('#2e2a3a', '#2e2a3a', 0.92) },
+  { n: 'ピンクの サングラス', d: () => shades('#ff7fb6', '#e85a9b', 0.75) },
+  { n: 'ハートの サングラス', d: () => temples('#c93a55') + `<g opacity=".92">` + mirror(heart(177, 181, 15, '#f2566e')) + `</g>` + mirror(circle(170, 174, 3, '#fff', 'opacity=".7"')) },
+  { n: 'おほしさまの サングラス', d: () => temples('#e0a82e') + mirror(star(177, 181, 18, '#ffd23f') + circle(172, 176, 3, '#fff', 'opacity=".8"')) },
+  { n: 'まるめがね', d: () => temples('#e0a82e') + mirror(circle(177, 181, 17, '#fff', 'fill-opacity=".25" stroke="#e0a82e" stroke-width="3.5"')) },
+  { n: 'にじの サングラス', d: () => shades('url(#gRainbow)', '#a678e8', 0.9) },
+  { n: 'ねこの めがね', d: () => temples('#ff7fb6') +
+      mirror(`<path d="M158 172 L152 159 L170 166 Q192 164 195 176 Q196 194 178 195 Q158 196 158 172Z" fill="#4a2c6b" fill-opacity=".88" stroke="#ff7fb6" stroke-width="3.5" stroke-linejoin="round"/>`) },
+  { n: 'みずいろの サングラス', d: () => shades('#5cc8e8', '#3a9fc0', 0.75) },
+  { n: 'ゴーグル', d: () => mirror(`<path d="M152 180 L135 178" stroke="#ff9f43" stroke-width="11" stroke-linecap="round"/>`) +
+      `<rect x="150" y="162" width="100" height="37" rx="17" fill="#8fd0ff" fill-opacity=".6" stroke="#ff9f43" stroke-width="6"/>
+       <path d="M164 173 H182" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/>` },
+];
+
+/* ---------- バッグ(b: からだの うしろに かく ぶぶん) ---------- */
+const handle = c => `<path d="M100 374 Q115 326 130 374" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+const BAGS = [
+  NONE,
+  { n: 'ポシェット', vb: '160 250 124 170', d: () => `<path d="M176 262 L244 380" stroke="#c98a5a" stroke-width="5" stroke-linecap="round"/>
+      <rect x="226" y="374" width="44" height="36" rx="10" fill="#ff7fb6"/><path d="M226 384 Q248 400 270 384" stroke="#e85a9b" stroke-width="3" fill="none"/>` + heart(248, 396, 6, '#fff') },
+  { n: 'リュック', vb: '130 240 140 130', b: () => `<rect x="146" y="262" width="108" height="98" rx="26" fill="#7cc8f5"/><path d="M186 264 Q200 246 214 264" stroke="#4a9fe0" stroke-width="6" fill="none"/>`,
+      d: () => mirror(`<path d="M178 258 L174 334" stroke="#4a9fe0" stroke-width="9" stroke-linecap="round"/>` + circle(175, 300, 4, '#ffd23f')) },
+  { n: 'トートバッグ', vb: '70 322 92 112', d: () => handle('#ff9f43') + `<path d="M88 370 H142 L138 420 Q115 426 92 420Z" fill="#fff3b8" stroke="#ff9f43" stroke-width="3" stroke-linejoin="round"/>` + flower(115, 396, 11, '#ff8fb8') },
+  { n: 'ハートの バッグ', vb: '70 322 92 112', d: () => handle('#ffd23f') + heart(115, 394, 24, '#f2566e') + circle(105, 384, 5, '#fff', 'opacity=".7"') },
+  { n: 'ウエストポーチ', vb: '158 310 84 60', d: () => `<path d="M166 332 Q200 344 234 332" stroke="#3a2e3f" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <rect x="181" y="328" width="38" height="25" rx="10" fill="#a678e8"/><path d="M187 336 H213" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>` + star(200, 345, 4, '#ffe36b') },
+  { n: 'ねこの ポシェット', vb: '116 250 124 170', d: () => `<path d="M224 262 L158 378" stroke="#ff9f43" stroke-width="5" stroke-linecap="round"/>
+      <path d="M134 380 L136 362 L150 374Z M170 380 L168 362 L154 374Z" fill="#ffd84a" stroke="#ffd84a" stroke-width="4" stroke-linejoin="round"/>` + circle(152, 394, 21, '#ffd84a') +
+      circle(145, 391, 2.6, '#4a2c2a') + circle(159, 391, 2.6, '#4a2c2a') + `<path d="M148 399 Q152 403 156 399" stroke="#4a2c2a" stroke-width="2" fill="none" stroke-linecap="round"/>` },
+  { n: 'おほしさまの バッグ', vb: '70 322 92 112', d: () => handle('#ff9cc8') + star(115, 398, 26, '#ffd23f') + circle(115, 399, 6, '#fff') },
+  { n: 'かごバッグ', vb: '70 322 92 112', d: () => handle('#a0623a') + flower(104, 368, 8, '#ff8fb8') + flower(126, 366, 8, '#fff') +
+      `<path d="M90 374 H140 L134 420 H96Z" fill="#e0b06a" stroke="#c98a3a" stroke-width="3" stroke-linejoin="round"/>
+       <path d="M92 388 H138 M94 403 H136" stroke="#c98a3a" stroke-width="2.5"/>` },
+];
+
 const BIG = 'x="-1000" width="2400"';
 const cloud = (x, y, s = 1) => `<g fill="#fff" opacity=".9">${circle(x, y, 20 * s, '#fff')}${circle(x + 24 * s, y - 8 * s, 24 * s, '#fff')}${circle(x + 52 * s, y, 20 * s, '#fff')}<rect x="${x}" y="${y}" width="${52 * s}" height="${20 * s}" rx="${10 * s}"/></g>`;
 const tower = x => `<rect x="${x}" y="300" width="64" height="260" fill="#e3d0fa"/><path d="M${x - 10} 300 L${x + 32} 210 L${x + 74} 300Z" fill="#ff9cc8"/>
   <rect x="${x + 22}" y="340" width="20" height="34" rx="10" fill="#b79ae6"/><rect x="${x + 22}" y="420" width="20" height="34" rx="10" fill="#b79ae6"/>
   <path d="M${x + 32} 210 L${x + 32} 184 L${x + 52} 192 L${x + 32} 200" fill="#ffd23f" stroke="#ffd23f" stroke-width="2"/>`;
+const bld = (x, w, h, c, win = '#fff6b8') => {
+  let s = `<rect x="${x}" y="${548 - h}" width="${w}" height="${h}" rx="5" fill="${c}"/>`;
+  for (let yy = 548 - h + 16; yy < 510; yy += 36)
+    for (let xx = x + 11; xx <= x + w - 25; xx += 25) s += `<rect x="${xx}" y="${yy}" width="14" height="20" rx="3" fill="${win}"/>`;
+  return s;
+};
+const tree = (x, y, c = '#7fd18b') => `<rect x="${x - 9}" y="${y - 76}" width="18" height="80" rx="6" fill="#a0623a"/>` +
+  circle(x - 32, y - 86, 34, c) + circle(x + 32, y - 86, 34, c) + circle(x, y - 118, 44, c);
+const lolli = (x, y, c) => `<rect x="${x - 4}" y="${y}" width="8" height="${556 - y}" rx="4" fill="#fff"/>` +
+  circle(x, y, 34, c) + circle(x, y, 24, '#fff') + circle(x, y, 14, c) + circle(x, y, 5, '#fff');
 const BGS = [
   { n: 'おしろ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gCastle)"/>` + cloud(40, 110) + cloud(290, 70, 0.8) + tower(-6) + tower(342) +
       `<rect ${BIG} y="545" height="1200" fill="#bfe8a8"/>` },
@@ -406,14 +580,70 @@ const BGS = [
   { n: 'キラキラ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gKira)"/>` +
       [[50, 80, 14], [330, 60, 18], [80, 300, 10], [340, 260, 12], [30, 480, 16], [365, 470, 12], [200, 30, 9], [110, 180, 7], [300, 400, 8], [-70, 200, 14], [470, 150, 12], [-50, 520, 10], [450, 560, 14]]
         .map(([x, y, r], i) => i % 3 === 2 ? heart(x, y, r * 0.8, '#fff') : star(x, y, r, '#fff')).join('') },
+  { n: 'まち', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSky)"/>` + cloud(150, 60, 0.8) +
+      bld(-236, 80, 250, '#a5e8a0') + bld(-150, 82, 330, '#c5a3ff') + bld(-62, 64, 250, '#ff9cc8') + bld(8, 76, 190, '#8fd0ff') +
+      bld(316, 76, 210, '#ffc48a') + bld(398, 64, 300, '#ff9cc8') + bld(468, 82, 240, '#8fd0ff') + bld(556, 80, 320, '#c5a3ff') +
+      `<rect ${BIG} y="545" height="1200" fill="#b9b4c7"/>` +
+      Array.from({ length: 14 }, (_, i) => `<rect x="${-460 + i * 96}" y="588" width="54" height="9" rx="4" fill="#fff"/>`).join('') },
+  { n: 'こうえん', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gGarden)"/>` + circle(64, 78, 34, '#ffe36b') + cloud(240, 80) +
+      `<rect ${BIG} y="540" height="1200" fill="#9fdc8c"/>` + tree(-110, 556) + tree(36, 552, '#6fc78a') + tree(368, 556) + tree(500, 552, '#6fc78a') +
+      `<ellipse cx="200" cy="606" rx="170" ry="24" fill="#f3e3c3"/>` +
+      [[-40, 580, '#ff8fb8'], [96, 566, '#fff'], [310, 570, '#ffd23f'], [440, 584, '#c5a3ff']].map(([x, y, c]) => flower(x, y, 11, c, c === '#ffd23f' ? '#ff9f43' : '#ffd84a')).join('') },
+  { n: 'ステージ', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gStage)"/>
+      <g fill="#fff6b8" opacity=".2"><path d="M70 -60 L-60 548 H170Z"/><path d="M330 -60 L230 548 H460Z"/><path d="M200 -60 L80 548 H320Z"/></g>` +
+      [[70, 120], [330, 150], [120, 260], [290, 300], [40, 380], [364, 420]].map(([x, y], i) => star(x, y, 7 + i % 3 * 2, '#ffe36b')).join('') +
+      `<rect ${BIG} y="545" height="1200" fill="#a56a45"/><rect ${BIG} y="545" height="10" fill="#8a5334"/>` +
+      mirror(`<path d="M-1000 -1000 H46 Q14 260 40 548 H-1000Z" fill="#d6405f"/><path d="M10 -1000 Q-12 260 6 548" stroke="#b52f4c" stroke-width="6" fill="none"/>`) +
+      `<rect ${BIG} y="-1000" height="1006" fill="#c2334f"/>` + Array.from({ length: 30 }, (_, i) => circle(-500 + i * 48, 6, 25, '#c2334f')).join('') },
+  { n: 'ゆきの くに', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSnow)"/>` +
+      [[30, 60, 5], [90, 150, 4], [340, 90, 5], [290, 180, 4], [60, 290, 4], [362, 300, 5], [20, 420, 4], [380, 440, 4], [150, 40, 4], [250, 110, 3], [-70, 200, 5], [470, 160, 5], [-30, 360, 4], [440, 380, 4]]
+        .map(([x, y, r]) => circle(x, y, r, '#fff')).join('') +
+      `<ellipse cx="200" cy="660" rx="900" ry="140" fill="#fff"/><rect x="348" y="520" width="14" height="34" fill="#a0623a"/>` +
+      [[0, 60], [34, 52], [64, 44]].map(([dy, w]) => `<path d="M${355 - w} ${526 - dy} L355 ${456 - dy} L${355 + w} ${526 - dy}Z" fill="#4fae7a"/>
+        <path d="M${355 - w * 0.45} ${488 - dy} L355 ${456 - dy} L${355 + w * 0.45} ${488 - dy} Q355 ${498 - dy} ${355 - w * 0.45} ${488 - dy}Z" fill="#fff"/>`).join('') +
+      circle(46, 538, 34, '#fff', 'stroke="#cfdff2" stroke-width="3"') + circle(46, 486, 24, '#fff', 'stroke="#cfdff2" stroke-width="3"') +
+      circle(38, 481, 3, '#4a2c2a') + circle(54, 481, 3, '#4a2c2a') +
+      `<path d="M46 488 L64 492 L46 496Z" fill="#ff9f43"/><rect x="24" y="504" width="44" height="10" rx="5" fill="#f2566e"/><path d="M28 464 H64 L60 436 H32Z" fill="#4a3a8c"/>` },
+  { n: 'おかしの くに', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gCandy)"/>` + cloud(40, 90) + cloud(280, 60, 0.8) +
+      [[110, 200, '#ff8fb8'], [306, 236, '#c5a3ff']].map(([x, y, c]) => circle(x, y, 14, 'none', `stroke="#f0b27a" stroke-width="14"`) + circle(x, y, 14, 'none', `stroke="${c}" stroke-width="9"`)).join('') +
+      lolli(40, 400, '#ff8fb8') + lolli(366, 360, '#8fd0ff') + lolli(-70, 350, '#c5a3ff') + lolli(470, 410, '#ffd84a') +
+      `<rect ${BIG} y="548" height="1200" fill="#ffb3d1"/>` + Array.from({ length: 40 }, (_, i) => circle(-580 + i * 40, 548, 20, '#ffb3d1')).join('') +
+      [[20, 590, '#fff'], [90, 604, '#ffd84a'], [330, 596, '#8fd0ff'], [384, 608, '#fff'], [-60, 600, '#a5e8a0'], [450, 592, '#ffd84a']]
+        .map(([x, y, c], i) => `<rect x="${x - 8}" y="${y - 3}" width="16" height="6" rx="3" fill="${c}" transform="rotate(${i * 50 - 60} ${x} ${y})"/>`).join('') },
+  { n: 'うちゅう', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSpace)"/>` +
+      [[40, 50, 7], [120, 110, 5], [250, 40, 6], [300, 170, 5], [60, 250, 6], [370, 280, 7], [30, 400, 5], [350, 430, 6], [180, 80, 4], [-80, 140, 7], [470, 90, 6], [-40, 330, 5], [450, 360, 6]]
+        .map(([x, y, r]) => star(x, y, r, '#fff6b8')).join('') +
+      circle(328, 96, 36, '#ffb38a') + `<ellipse cx="328" cy="96" rx="58" ry="12" fill="none" stroke="#ffe36b" stroke-width="6" transform="rotate(-18 328 96)"/>` +
+      circle(58, 150, 22, '#6ad1ff') + circle(52, 144, 8, '#a5e8a0') + circle(66, 158, 6, '#a5e8a0') +
+      `<ellipse cx="200" cy="670" rx="900" ry="140" fill="#cfc7e8"/>` +
+      [[40, 580, 22, 7], [340, 596, 28, 8], [120, 606, 14, 5], [-90, 590, 26, 8], [480, 586, 22, 7]].map(([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#b3a9d6"/>`).join('') },
+  { n: 'さくら', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gCastle)"/><rect ${BIG} y="545" height="1200" fill="#bfe8a8"/>` +
+      tree(-120, 556, '#ffc9e0') + tree(30, 560, '#ffb3d1') + tree(374, 556, '#ffc9e0') + tree(510, 560, '#ffb3d1') +
+      [[90, 120], [150, 220], [60, 330], [310, 140], [260, 60], [340, 300], [110, 450], [300, 430], [200, 30], [-50, 200], [450, 250], [380, 500], [30, 590], [330, 584]]
+        .map(([x, y], i) => `<ellipse cx="${x}" cy="${y}" rx="8" ry="5" fill="#ff9cc8" opacity=".85" transform="rotate(${i * 47 % 180} ${x} ${y})"/>`).join('') },
+  { n: 'ゆうえんち', d: () => `<rect ${BIG} y="-1000" height="2700" fill="url(#gSky)"/>` + cloud(30, 70) +
+      `<path d="M330 330 L286 548 M330 330 L374 548" stroke="#c5a3ff" stroke-width="9" stroke-linecap="round"/>
+       <circle cx="330" cy="330" r="118" fill="none" stroke="#ff9cc8" stroke-width="7"/>` +
+      Array.from({ length: 8 }, (_, i) => {
+        const a = i * Math.PI / 4, x = (330 + Math.cos(a) * 118).toFixed(1), y = (330 + Math.sin(a) * 118).toFixed(1);
+        return `<path d="M330 330 L${x} ${y}" stroke="#ffd1e6" stroke-width="4"/>` + circle(x, y, 15, ['#ff8fa3', '#ffd84a', '#a5e8a0', '#8fd0ff'][i % 4]);
+      }).join('') + circle(330, 330, 12, '#ffd23f') +
+      `<rect x="-6" y="440" width="96" height="110" fill="#fff3d6"/>` + [0, 2, 4].map(i => `<rect x="${-6 + i * 19.2}" y="440" width="19.2" height="110" fill="#ff8fa3"/>`).join('') +
+      `<path d="M-20 444 L42 356 L104 444Z" fill="#f2566e"/><path d="M42 356 V330 L62 338 L42 346" fill="#ffd23f" stroke="#ffd23f" stroke-width="2"/>
+       <rect ${BIG} y="545" height="1200" fill="#bfe8a8"/>` },
 ];
 
 /* ================= カテゴリ ================= */
 const CATS = [
-  { k: 'crown',    ico: '👑', n: 'かんむり',   list: CROWNS,    vb: '140 36 120 90',   at: [200, 80] },
+  { k: 'crown',    ico: '👑', n: 'ぼうし',     list: CROWNS,    vb: '140 36 120 90',   at: [200, 80] },
   { k: 'hair',     ico: '💇‍♀️', n: 'かみがた',   list: HAIRS,     vb: '40 50 320 370',   at: [200, 150] },
   { k: 'hairColor',ico: '🎨', n: 'かみのいろ', list: HAIR_COLORS, vb: '0 0 100 100',   at: [200, 130] },
   { k: 'dress',    ico: '👗', n: 'ドレス',     list: DRESSES,   vb: '30 240 340 350',  at: [200, 440] },
+  { k: 'top',      ico: '👕', n: 'トップス',   list: TOPS,      vb: '105 242 190 124', at: [200, 300] },
+  { k: 'bottom',   ico: '👖', n: 'ボトムス',   list: BOTTOMS,   vb: '110 310 180 275', at: [200, 440] },
+  { k: 'shoes',    ico: '👟', n: 'くつ',       list: SHOES,     vb: '135 522 130 96',  at: [200, 590] },
+  { k: 'glasses',  ico: '🕶️', n: 'めがね',     list: GLASSES,   vb: '130 146 140 70',  at: [200, 180] },
+  { k: 'bag',      ico: '👜', n: 'バッグ',     list: BAGS,      vb: '70 240 220 200',  at: [200, 340] },
   { k: 'ornament', ico: '🎀', n: 'かみかざり', list: ORNAMENTS, vb: '228 102 52 52',   at: [254, 128] },
   { k: 'necklace', ico: '📿', n: 'ネックレス', list: NECKLACES, vb: '168 234 64 56',   at: [200, 262] },
   { k: 'earring',  ico: '💎', n: 'イヤリング', list: EARRINGS,  vb: '124 186 30 30',   at: [200, 200] },
@@ -421,16 +651,27 @@ const CATS = [
   { k: 'wings',    ico: '🦋', n: 'はね',       list: WINGS,     vb: '10 190 380 400',  at: [200, 300] },
   { k: 'bg',       ico: '🏰', n: 'ばしょ',     list: BGS,       vb: '0 0 400 620',     at: [200, 300] },
 ];
-const DEFAULTS = Object.fromEntries(CATS.map(c => [c.k, 0]));
+const ZERO = Object.fromEntries(CATS.map(c => [c.k, 0]));
+const DEFAULTS = { ...ZERO, dress: 1 };
+const isPart = k => k === 'top' || k === 'bottom';
+// まえの きろく(ドレスに「なし」が なく、トップスなども ないころ)を いまの ならびに なおす
+const upgrade = s => {
+  const o = { ...ZERO, ...s };
+  if (!Number.isInteger(s.top)) o.dress = Number.isInteger(s.dress) ? s.dress + 1 : 1;
+  return o;
+};
 
 /* ================= じょうたい ================= */
 const SAVE_KEY = 'princess-dressup-v1';
 let state = { ...DEFAULTS };
 let muted = false;
 try {
-  const s = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
-  for (const c of CATS) if (Number.isInteger(s[c.k]) && c.list[s[c.k]]) state[c.k] = s[c.k];
-  muted = !!s.muted;
+  const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+  if (raw) {
+    const s = upgrade(raw);
+    for (const c of CATS) if (Number.isInteger(s[c.k]) && c.list[s[c.k]]) state[c.k] = s[c.k];
+    muted = !!raw.muted;
+  }
 } catch (e) {}
 const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, muted })); } catch (e) {} };
 let curTab = 0;
@@ -440,7 +681,8 @@ const ALBUM_KEY = 'princess-dressup-album-v1', ALBUM_MAX = 100;
 let album = [];
 try {
   const a = JSON.parse(localStorage.getItem(ALBUM_KEY) || '[]');
-  album = a.filter(e => e && e.s && CATS.every(c => Number.isInteger(e.s[c.k]) && c.list[e.s[c.k]]));
+  album = a.filter(e => e && e.s).map(e => ({ t: e.t, s: upgrade(e.s) }))
+    .filter(e => CATS.every(c => Number.isInteger(e.s[c.k]) && c.list[e.s[c.k]]));
 } catch (e) {}
 const saveAlbum = () => { try { localStorage.setItem(ALBUM_KEY, JSON.stringify(album)); } catch (e) {} };
 const sameLook = (a, b) => CATS.every(c => a[c.k] === b[c.k]);
@@ -497,14 +739,18 @@ const FACE =
   `<path d="M188 206 Q200 219 212 206" stroke="#e2557a" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
 
 function dollHTML(st = state) {
-  const state = st, c = HAIR_COLORS[st.hairColor].c;
+  const state = st, c = HAIR_COLORS[st.hairColor].c, bag = BAGS[st.bag], btm = BOTTOMS[st.bottom];
   return layer('wings', WINGS[state.wings].d()) +
     layer('hair', HAIRS[state.hair].d(c)) +
-    mirror(`<ellipse cx="176" cy="594" rx="19" ry="10" fill="#ffc94a"/>`) +
+    (bag.b ? bag.b() : '') +
+    mirror(`<path d="M186 356 L178 582" stroke="${SKIN}" stroke-width="20" stroke-linecap="round"/>`) +
+    layer('shoes', SHOES[state.shoes].d()) +
     mirror(`<path d="M158 272 L115 345" stroke="${SKIN}" stroke-width="18" stroke-linecap="round"/>`) +
     `<rect x="188" y="222" width="24" height="40" fill="${SKIN}"/>
-     <path d="M168 262 Q200 244 232 262 L232 300 L168 300Z" fill="${SKIN}"/>` +
-    layer('dress', DRESSES[state.dress].d()) +
+     <path d="M168 262 Q200 244 232 262 L232 330 Q237 350 234 372 H166 Q163 350 168 330Z" fill="${SKIN}"/>` +
+    (state.dress > 0 ? layer('dress', DRESSES[state.dress].d())
+      : layer('bottom', btm.d()) + layer('top', TOPS[state.top].d()) + (btm.o ? btm.o() : '')) +
+    layer('bag', bag.d()) +
     layer('wand', WANDS[state.wand].d()) +
     mirror(circle(115, 347, 11.5, SKIN)) +
     mirror(circle(139, 184, 9, SKIN)) +
@@ -512,6 +758,7 @@ function dollHTML(st = state) {
     layer('hairColor', BANGS(c)) +
     layer('earring', EARRINGS[state.earring].d()) +
     layer('necklace', NECKLACES[state.necklace].d()) +
+    layer('glasses', GLASSES[state.glasses].d()) +
     layer('crown', CROWNS[state.crown].d()) +
     layer('ornament', ORNAMENTS[state.ornament].d());
 }
@@ -531,11 +778,13 @@ function thumb(cat, i) {
   const it = cat.list[i];
   if (it.none) return `<span class="none">なし</span>`;
   if (cat.k === 'hairColor') return `<svg viewBox="${cat.vb}">${circle(50, 50, 34, it.c)}${circle(39, 39, 9, '#fff', 'opacity=".45"')}</svg>`;
-  let inner = it.d(hairColor());
+  let inner = (it.b ? it.b() : '') + it.d(hairColor()) + (it.o ? it.o() : '');
   if (cat.k === 'hair') inner += circle(200, 170, 62, SKIN) + BANGS(hairColor());
   const par = cat.k === 'bg' ? 'xMidYMid slice' : 'xMidYMid meet';
-  return `<svg viewBox="${cat.vb}" preserveAspectRatio="${par}">${inner}</svg>`;
+  return `<svg viewBox="${it.vb || cat.vb}" preserveAspectRatio="${par}">${inner}</svg>`;
 }
+// トップス・ボトムスは ドレスを きている あいだは「きていない」あつかい
+const isOn = (cat, i) => state[cat.k] === i && !(isPart(cat.k) && state.dress > 0);
 
 function renderTabs() {
   $('tabs').innerHTML = CATS.map((c, i) =>
@@ -545,7 +794,7 @@ function renderTabs() {
 function renderItems() {
   const cat = CATS[curTab];
   $('items').innerHTML = cat.list.map((it, i) =>
-    `<button class="item${state[cat.k] === i ? ' on' : ''}" data-i="${i}" data-nav="item-${i}" aria-label="${it.n}">${thumb(cat, i)}</button>`).join('');
+    `<button class="item${isOn(cat, i) ? ' on' : ''}" data-i="${i}" data-nav="item-${i}" aria-label="${it.n}">${thumb(cat, i)}</button>`).join('');
   applyCursor();
 }
 function selectTab(i) {
@@ -712,10 +961,12 @@ $('items').addEventListener('click', e => {
   curKey.panel = b.dataset.nav;
   // つけているものを もういちど おすと はずれる
   if (cat.list[0].none && i === state[cat.k]) i = 0;
+  // トップス・ボトムスを えらぶと ドレスは ぬぐ
+  if (isPart(cat.k)) state.dress = 0;
   state[cat.k] = i; save();
   renderDoll(cat.k); renderItems();
   if (cat.list[i].none) { sfx.off(); }
-  else { sfx.on(); sparkle(cat.at[0], cat.at[1], 7, cat.k === 'dress' || cat.k === 'wings' || cat.k === 'bg' ? 120 : 50); speak(cat.list[i].n); }
+  else { sfx.on(); sparkle(cat.at[0], cat.at[1], 7, cat.k === 'dress' || cat.k === 'bottom' || cat.k === 'wings' || cat.k === 'bg' ? 120 : 50); speak(cat.list[i].n); }
 });
 
 $('btnRandom').addEventListener('click', () => {
@@ -723,6 +974,8 @@ $('btnRandom').addEventListener('click', () => {
     const min = c.list[0].none && Math.random() < 0.8 ? 1 : 0;
     state[c.k] = min + Math.floor(Math.random() * (c.list.length - min));
   }
+  // はんぶんは ドレス、はんぶんは トップスと ボトムス
+  state.dress = Math.random() < 0.5 ? 0 : 1 + Math.floor(Math.random() * (DRESSES.length - 1));
   save(); renderDoll(); renderItems();
   sfx.on(); sparkle(200, 300, 16, 180);
 });
